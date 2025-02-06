@@ -6,8 +6,6 @@ import { useEffect } from "react";
 
 export const useWarmUpBrowser = () => {
   useEffect(() => {
-    // Warm up the android browser to improve UX
-    // https://docs.expo.dev/guides/authentication/#improving-user-experience
     void WebBrowser.warmUpAsync();
     return () => {
       void WebBrowser.coolDownAsync();
@@ -18,26 +16,24 @@ export const useWarmUpBrowser = () => {
 WebBrowser.maybeCompleteAuthSession();
 
 const AuthScreen = () => {
+  const insets = useSafeAreaInsets(); // Using SafeAreaInsets to adjust for notches or device safe areas
+
   useWarmUpBrowser();
-  const insets = useSafeAreaInsets();
+  
   return (
-    <View
-      style={[
-        styles.container,
-        { paddingTop: insets.top + 40, paddingBottom: insets.bottom },
-      ]}
-    >
-      <View style={styles.headingContainer}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      <View style={[styles.headingContainer]}>
         <Text style={styles.label}>Neatify</Text>
-        <Text style={styles.description}>
-          Clean The World.
-        </Text>
       </View>
 
-      <View style={styles.socialButtonsContainer}>
-        <SocialLoginButton strategy="facebook" />
-        <SocialLoginButton strategy="google" />
-        <SocialLoginButton strategy="apple" />
+      <View style={styles.flexGrowArea} />
+
+      <View style={[styles.blackDiv, { paddingBottom: insets.bottom }]}>
+        <View style={styles.socialButtonsContainer}>
+          <SocialLoginButton strategy="apple" />
+          <SocialLoginButton strategy="google" />
+          <SocialLoginButton strategy="facebook" />
+        </View>
       </View>
     </View>
   );
@@ -49,24 +45,44 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "white",
-    padding: 20,
+    justifyContent: "center", // Ensures the entire content is vertically centered
+    alignItems: "center",
+    padding: 0,
     gap: 20,
   },
   headingContainer: {
     width: "100%",
     gap: 5,
+    alignItems: "center",
+    justifyContent: "center", // Vertically centers the content inside
+    flex: 1, // Takes up all available space, ensuring centering happens
   },
   label: {
-    fontSize: 20,
+    fontSize: 36,
     fontWeight: "bold",
+    color: "#0000FF",
   },
   description: {
     fontSize: 16,
     color: "gray",
+    textAlign: "center",
+  },
+  flexGrowArea: {
+    flex: 1,
+  },
+  blackDiv: {
+    backgroundColor: "black",
+    borderTopLeftRadius: 40,
+    borderTopRightRadius: 40,
+    padding: 20,
+    width: "100%",
   },
   socialButtonsContainer: {
     width: "100%",
-    marginTop: 20,
-    gap: 10,
+    gap: 12,
+    marginBottom: 35,
+    paddingLeft: 10,
+    paddingRight: 10,
+    marginTop: 8,
   },
 });

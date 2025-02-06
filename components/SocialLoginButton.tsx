@@ -7,6 +7,8 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Image,
+  Platform,
 } from "react-native";
 import * as Linking from "expo-linking";
 import React, { useState } from "react";
@@ -32,6 +34,7 @@ const SocialLoginButton = ({
   const [isLoading, setIsLoading] = useState(false);
 
   const router = useRouter();
+
   const buttonText = () => {
     if (isLoading) {
       return "Loading...";
@@ -48,9 +51,14 @@ const SocialLoginButton = ({
 
   const buttonIcon = () => {
     if (strategy === "facebook") {
-      return <Ionicons name="logo-facebook" size={24} color="#1977F3" />;
+      return <Ionicons name="logo-facebook" size={24} color="#1877F2" />;
     } else if (strategy === "google") {
-      return <Ionicons name="logo-google" size={24}  />;
+      return (
+        <Image
+          source={require("../assets/images/google.png")}
+          style={[styles.socialIcon, { resizeMode: "contain" }]} // Ensures the logo fits properly
+        />
+      );
     } else if (strategy === "apple") {
       return <Ionicons name="logo-apple" size={24} color="black" />;
     }
@@ -63,18 +71,11 @@ const SocialLoginButton = ({
         redirectUrl: Linking.createURL("/dashboard", { scheme: "myapp" }),
       });
 
-      // If sign in was successful, set the active session
       if (createdSessionId) {
-        console.log("Session created", createdSessionId);
         setActive!({ session: createdSessionId });
         await user?.reload();
-      } else {
-        // Use signIn or signUp returned from startOAuthFlow
-        // for next steps, such as MFA
       }
     } catch (err) {
-      // See https://clerk.com/docs/custom-flows/error-handling
-      // for more info on error handling
       console.error(JSON.stringify(err, null, 2));
     } finally {
       setIsLoading(false);
@@ -87,13 +88,14 @@ const SocialLoginButton = ({
       onPress={onSocialLoginPress}
       disabled={isLoading}
     >
-      {isLoading ? (
-        <ActivityIndicator size="small" color="black" />
-      ) : (
-        buttonIcon()
-      )}
+      <View style={styles.iconContainer}>
+        {isLoading ? (
+          <ActivityIndicator size="small" color="black" style={styles.loader} />
+        ) : (
+          buttonIcon()
+        )}
+      </View>
       <Text style={styles.buttonText}>{buttonText()}</Text>
-      <View />
     </TouchableOpacity>
   );
 };
@@ -105,15 +107,36 @@ const styles = StyleSheet.create({
     width: "100%",
     borderColor: "gray",
     borderWidth: StyleSheet.hairlineWidth,
-    padding: 10,
-    borderRadius: 10,
-    flexDirection: "row",
-    gap: 10,
-    justifyContent: "space-between",
+    padding: 11,
+    borderRadius: 16,
+    flexDirection: "row", // Row direction
     alignItems: "center",
+    backgroundColor: "white",
+    marginBottom: 1,
+    height: 50, // Set a fixed height for the button
   },
   buttonText: {
-    fontSize: 15,
-    fontWeight: "medium",
+    marginLeft: -15, // Add left margin
+    fontSize: 18,
+    fontWeight: "500", // Semi-bold font weight
+    fontFamily: Platform.OS === "ios" ? "SanFrancisco" : "Roboto", // Apply font family based on platform
+    flex: 1, // This will take remaining space and center the text
+    textAlign: "center", // Centers the text
+  },
+  socialIcon: {
+    width: 30,
+    height: 30,
+  },
+  iconContainer: {
+    justifyContent: "center",
+    alignItems: "center",
+    width: 30, // Fixed width to maintain consistency
+    height: 25, // Fixed height to maintain consistency
+    marginLeft: 10,
+    position: "relative", // Ensure ActivityIndicator does not disrupt layout
+  },
+  loader: {
+    position: "absolute", // Keep loader centered in the icon container
   },
 });
+
