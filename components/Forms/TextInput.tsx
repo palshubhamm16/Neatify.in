@@ -25,14 +25,14 @@ const TextInput = ({
           <Text style={styles.label}>
             {label}
 
-            {required && <Text style={{ color: "red" }}>*</Text>}
+            {required && <Text style={{ color: "white" }}>*</Text>}
           </Text>
           <RNTextInput
             placeholder={placeholder}
             onBlur={onBlur}
             onChangeText={onChange}
             value={value}
-            style={[styles.textInput, { borderColor: error ? "red" : "gray" }]}
+            style={[styles.textInput, { borderColor: error ? "red" : "white" }]}
             autoComplete="off"
             autoCapitalize="none"
           />
@@ -54,13 +54,16 @@ const styles = StyleSheet.create({
   },
   textInput: {
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "gray",
+    borderColor: "white",
     borderRadius: 10,
-    padding: 10,
+    padding: 13,
     width: "100%",
+    color: "white",
+    marginTop: 3,
   },
   label: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: "500",
+    color: "white",
   },
 });

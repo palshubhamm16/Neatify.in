@@ -1,6 +1,6 @@
 import { Redirect, Tabs } from "expo-router";
 import { Platform } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, Octicons } from "@expo/vector-icons";
 import { useAuth, useUser } from "@clerk/clerk-expo";
 
 import { Colors } from "@/constants/Colors";
@@ -26,28 +26,49 @@ export default function TabLayout() {
         headerShown: false,
         tabBarStyle: Platform.select({
           ios: {
-            // Use a transparent background on iOS to show the blur effect
             position: "absolute",
           },
           default: {},
         }),
       }}
     >
+      {/* Home Tab */}
       <Tabs.Screen
         name="index"
         options={{
           title: "Home",
           tabBarIcon: ({ color }) => (
-            <Ionicons size={28} name="home" color={color} />
+            <Octicons name="home" size={24} color={color} />
           ),
         }}
       />
+      {/* Eco Tips Tab */}
       <Tabs.Screen
-        name="settings"
+        name="tips"
         options={{
-          title: "Settings",
+          title: "Eco Tips",
           tabBarIcon: ({ color }) => (
-            <Ionicons size={28} name="settings-outline" color={color} />
+            <Ionicons size={28} name="bulb-outline" color={color} />
+          ),
+        }}
+      />
+      {/* Pickup Tab */}
+      <Tabs.Screen
+        name="pickup"
+        options={{
+          title: "Pickup",
+          tabBarIcon: ({ color }) => (
+            <Ionicons size={28} name="cube-outline" color={color} />
+          ),
+        }}
+      />
+      {/* Profile Tab */}
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: "Profile",
+          tabBarIcon: ({ color }) => (
+            <Ionicons size={28} name="person-circle-outline" color={color} />
           ),
         }}
       />

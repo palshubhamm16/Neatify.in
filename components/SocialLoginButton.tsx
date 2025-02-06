@@ -82,9 +82,31 @@ const SocialLoginButton = ({
     }
   }, []);
 
+  // Apply custom styles based on the strategy (color changes)
+  const containerStyle = [
+    styles.container,
+    (strategy === "facebook" || strategy === "google") && {
+      backgroundColor: "#2B2b2e", // Apply #2B2b2e color for Facebook and Google buttons
+    },
+    strategy === "apple" && {
+      backgroundColor: "white", // Set Apple button background to white
+     
+    },
+  ];
+
+  const buttonTextStyle = [
+    styles.buttonText,
+    (strategy === "facebook" || strategy === "google") && {
+      color: "white", // Set text color to white for Facebook and Google buttons
+    },
+    strategy === "apple" && {
+      color: "#black", // Set text color for Apple button to #2B2b2e
+    },
+  ];
+
   return (
     <TouchableOpacity
-      style={[styles.container]}
+      style={containerStyle}
       onPress={onSocialLoginPress}
       disabled={isLoading}
     >
@@ -95,7 +117,7 @@ const SocialLoginButton = ({
           buttonIcon()
         )}
       </View>
-      <Text style={styles.buttonText}>{buttonText()}</Text>
+      <Text style={buttonTextStyle}>{buttonText()}</Text>
     </TouchableOpacity>
   );
 };
@@ -105,13 +127,11 @@ export default SocialLoginButton;
 const styles = StyleSheet.create({
   container: {
     width: "100%",
-    borderColor: "gray",
     borderWidth: StyleSheet.hairlineWidth,
     padding: 11,
     borderRadius: 16,
     flexDirection: "row", // Row direction
     alignItems: "center",
-    backgroundColor: "white",
     marginBottom: 1,
     height: 50, // Set a fixed height for the button
   },
@@ -139,4 +159,3 @@ const styles = StyleSheet.create({
     position: "absolute", // Keep loader centered in the icon container
   },
 });
-
