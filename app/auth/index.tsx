@@ -50,9 +50,11 @@
 
         <View style={[styles.blackDiv, { paddingBottom: insets.bottom }]}>
           <View style={styles.socialButtonsContainer}>
-            <SocialLoginButton strategy="apple" />
-            <SocialLoginButton strategy="google" />
-            <SocialLoginButton strategy="facebook" />
+            <SocialLoginButton strategy="oauth_apple" label="Sign in with Apple" />
+            <SocialLoginButton strategy="oauth_google" label="Sign in with Google" />
+            <SocialLoginButton strategy="oauth_facebook" label="Sign in with Facebook" />
+            <SocialLoginButton strategy="email" label="Sign in with Email" />
+            <SocialLoginButton strategy="phone" label="Sign in with Phone" />
           </View>
         </View>
       </View>

@@ -1,115 +1,118 @@
-import {
-  ActivityIndicator,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  Platform,
-} from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useForm } from "react-hook-form";
+import React, { useState, useEffect } from "react";
+import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, Alert, FlexAlignType, StyleSheet, Platform } from "react-native";
+import { useForm, Controller } from "react-hook-form";
 import { useRouter } from "expo-router";
 import { useUser } from "@clerk/clerk-expo";
-import { useEffect, useState } from "react";
-import TextInput from "@/components/Forms/TextInput";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const CompleteYourAccountScreen = () => {
   const { user, isLoaded } = useUser();
-  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const [isLoading, setIsLoading] = useState(false);
 
   const { control, handleSubmit, setError, setValue } = useForm({
     defaultValues: {
-      full_name: "",
+      firstName: "",
+      lastName: "",
       username: "",
     },
   });
 
-  const onSubmit = async (data: any) => {
-    const { full_name, username } = data;
+  useEffect(() => {
+    if (!isLoaded || !user) return;
+
+    setValue("firstName", user.firstName || "");
+    setValue("lastName", user.lastName || "");
+    setValue("username", user.username || "");
+  }, [isLoaded, user]);
+
+  const onSubmit = async (data: { firstName: string; lastName: string; username: string }) => {
+    const { firstName, lastName, username } = data;
+
+    if (!firstName.trim() || !lastName.trim() || !username.trim()) {
+      return Alert.alert("Error", "All fields are required.");
+    }
 
     try {
       setIsLoading(true);
+
       await user?.update({
-        username: username,
-        firstName: full_name.split(" ")[0],
-        lastName: full_name.split(" ")[1],
-        unsafeMetadata: {
-          onboarding_completed: true,
-        },
+        firstName, // ✅ Correct Clerk API format
+        lastName,  // ✅ Correct Clerk API format
+        username,
+        unsafeMetadata: { onboarding_completed: true },
       });
 
       await user?.reload();
+      router.push("/(tabs)"); // Navigate after successful update
 
-      return router.push("/(tabs)");
-    } catch (error: any) {
-      if (error.message === "That username is taken. Please try another.") {
-        return setError("username", { message: "Username is already taken" });
-      }
-
-      return setError("full_name", { message: "An error occurred" });
+    } catch (error) {
+      setError("username", { message: (error as any).message || "An error occurred" });
     } finally {
       setIsLoading(false);
     }
   };
 
-  useEffect(() => {
-    if (!isLoaded) {
-      return;
-    }
-
-    if (!user) {
-      return;
-    }
-
-    setValue("full_name", user?.fullName || "");
-    setValue("username", user?.username || "");
-  }, [isLoaded, user]);
-
   return (
-    <View
-      style={[
-        styles.container,
-        { paddingTop: insets.top + 40, paddingBottom: insets.bottom },
-      ]}
-    >
-      <View style={styles.headingContainer}>
-        <Text style={styles.label}>Complete your account</Text>
-      </View>
+    <View style={styles.formContainer}>
+  {/* First Name Input */}
+  <Text style={styles.inputLabel}>First Name</Text>
+  <Controller
+    control={control}
+    name="firstName"
+    rules={{ required: "First Name is required" }}
+    render={({ field: { onChange, value } }) => (
+      <TextInput
+        style={styles.input}
+        placeholder="Enter First Name"
+        value={value}
+        onChangeText={onChange}
+      />
+    )}
+  />
 
-      <View style={styles.formContainer}>
-        <TextInput
-          control={control}
-          placeholder="Enter your full name"
-          label="Full Name"
-          required
-          name="full_name"
-        />
+  {/* Last Name Input */}
+  <Text style={styles.inputLabel}>Last Name</Text>
+  <Controller
+    control={control}
+    name="lastName"
+    rules={{ required: "Last Name is required" }}
+    render={({ field: { onChange, value } }) => (
+      <TextInput
+        style={styles.input}
+        placeholder="Enter Last Name"
+        value={value}
+        onChangeText={onChange}
+      />
+    )}
+  />
 
-        <TextInput
-          control={control}
-          placeholder="Enter your username"
-          label="Username"
-          required
-          name="username"
-        />
+  {/* Username Input */}
+  <Text style={styles.inputLabel}>Username</Text>
+  <Controller
+    control={control}
+    name="username"
+    rules={{ required: "Username is required" }}
+    render={({ field: { onChange, value } }) => (
+      <TextInput
+        style={styles.input}
+        placeholder="Choose a Username"
+        value={value}
+        onChangeText={onChange}
+      />
+    )}
+  />
 
-        <View style={{ marginTop: 20 }}>
-          <TouchableOpacity
-            style={[styles.button, { opacity: isLoading ? 0.7 : 1 }]}
-            onPress={handleSubmit(onSubmit)}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <ActivityIndicator size="small" color="white" />
-            ) : null}
-            <Text style={styles.buttonText}>
-              {isLoading ? "Loading..." : "Complete Account"}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+  <TouchableOpacity
+    style={[styles.button, { opacity: isLoading ? 0.7 : 1 }]}
+    onPress={handleSubmit(onSubmit)}
+    disabled={isLoading}
+  >
+    {isLoading ? <ActivityIndicator size="small" color="white" /> : null}
+    <Text style={styles.buttonText}>{isLoading ? "Loading..." : "Complete Account"}</Text>
+  </TouchableOpacity>
+
     </View>
   );
 };
@@ -139,6 +142,13 @@ const styles = StyleSheet.create({
     marginTop: 40,
     gap: 20,
   },
+  input: {
+    width: "100%",
+    backgroundColor: "white",
+    padding: 15,
+    borderRadius: 14,
+    color: "black",
+  },
   button: {
     width: "100%",
     backgroundColor: "white",
@@ -154,4 +164,11 @@ const styles = StyleSheet.create({
     fontWeight: "600", // Semi-bold font weight
     fontFamily: Platform.OS === "ios" ? "SanFrancisco" : "Roboto",
   },
+  inputLabel: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 5,
+  }
+  
 });

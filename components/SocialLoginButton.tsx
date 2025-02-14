@@ -1,161 +1,147 @@
-import { useOAuth, useUser } from "@clerk/clerk-expo";
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import {
-  ActivityIndicator,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  Image,
-  Platform,
-} from "react-native";
-import * as Linking from "expo-linking";
 import React, { useState } from "react";
+import { TouchableOpacity, Text, Image, ActivityIndicator, StyleSheet } from "react-native";
+import Icon from "react-native-vector-icons/FontAwesome"; // For fallback icons
+import { Ionicons } from "@expo/vector-icons"; // Import Ionicons
+import { useOAuth, useSignIn } from "@clerk/clerk-expo";
+import { useRouter } from "expo-router";
+import * as Linking from "expo-linking";
+import googleLogo from "../assets/images/google.png"
 
-const SocialLoginButton = ({
-  strategy,
-}: {
-  strategy: "facebook" | "google" | "apple";
-}) => {
-  const getStrategy = () => {
-    if (strategy === "facebook") {
-      return "oauth_facebook";
-    } else if (strategy === "google") {
-      return "oauth_google";
-    } else if (strategy === "apple") {
-      return "oauth_apple";
-    }
-    return "oauth_facebook";
-  };
 
-  const { startOAuthFlow } = useOAuth({ strategy: getStrategy() });
-  const { user } = useUser();
+interface SocialLoginButtonProps {
+  strategy: "oauth_google" | "oauth_facebook" | "oauth_apple" | "email" | "phone";
+  label: string;
+}
+
+const SocialLoginButton: React.FC<SocialLoginButtonProps> = ({ strategy, label }) => {
   const [isLoading, setIsLoading] = useState(false);
-
+  const { startOAuthFlow } = useOAuth({ strategy: strategy as "oauth_google" | "oauth_facebook" | "oauth_apple" });
+  const { signIn } = useSignIn();
   const router = useRouter();
 
-  const buttonText = () => {
-    if (isLoading) {
-      return "Loading...";
-    }
+  // Function to get the appropriate icon based on strategy
 
-    if (strategy === "facebook") {
-      return "Continue with Facebook";
-    } else if (strategy === "google") {
-      return "Continue with Google";
-    } else if (strategy === "apple") {
-      return "Continue with Apple";
+const buttonIcon = () => {
+  if (strategy === "oauth_facebook") {
+    return <Ionicons name="logo-facebook" size={24} color="white" />;
+  } else if (strategy === "oauth_google") {
+    return <Image source={googleLogo} style={styles.socialIcon} resizeMode="contain" />;
+  } else if (strategy === "oauth_apple") {
+    return <Ionicons name="logo-apple" size={24} color="white" />;
+  }
+  return null;
+};
+  
+
+  // Function to get the appropriate fallback vector icon
+  const getVectorIcon = () => {
+    switch (strategy) {
+      case "oauth_google":
+        return "google";
+      case "oauth_facebook":
+        return "facebook";
+      case "oauth_apple":
+        return "apple";
+      default:
+        return "envelope"; // Default email icon
     }
   };
 
-  const buttonIcon = () => {
-    if (strategy === "facebook") {
-      return <Ionicons name="logo-facebook" size={24} color="#1877F2" />;
-    } else if (strategy === "google") {
-      return (
-        <Image
-          source={require("../assets/images/google.png")}
-          style={[styles.socialIcon, { resizeMode: "contain" }]} // Ensures the logo fits properly
-        />
-      );
-    } else if (strategy === "apple") {
-      return <Ionicons name="logo-apple" size={24} color="black" />;
-    }
-  };
+  const handleLogin = async () => {
+    setIsLoading(true);
 
-  const onSocialLoginPress = React.useCallback(async () => {
     try {
-      setIsLoading(true);
-      const { createdSessionId, setActive } = await startOAuthFlow({
-        redirectUrl: Linking.createURL("/dashboard", { scheme: "myapp" }),
-      });
+      if (!signIn) {
+        throw new Error("Sign-in instance is undefined.");
+      }
 
-      if (createdSessionId) {
-        setActive!({ session: createdSessionId });
-        await user?.reload();
+      if (strategy === "email" || strategy === "phone") {
+        const identifier = strategy === "email" ? "test@example.com" : "+1234567890";
+        const signInResult = await signIn.create({ identifier });
+
+        if (!signInResult.supportedFirstFactors || signInResult.supportedFirstFactors.length === 0) {
+          throw new Error("No supported first factors available.");
+        }
+
+        router.push("./auth/verify");
+      } else {
+        const { createdSessionId, setActive } = await startOAuthFlow({
+          redirectUrl: Linking.createURL("/dashboard"),
+        });
+
+        if (createdSessionId) {
+          setActive?.({ session: createdSessionId });
+        }
       }
     } catch (err) {
-      console.error(JSON.stringify(err, null, 2));
+      console.error("Authentication Error:", err);
+      const errorMessage = err instanceof Error ? err.message : "An error occurred.";
+      alert("Login Failed: " + errorMessage);
     } finally {
       setIsLoading(false);
     }
-  }, []);
-
-  // Apply custom styles based on the strategy (color changes)
-  const containerStyle = [
-    styles.container,
-    (strategy === "facebook" || strategy === "google") && {
-      backgroundColor: "#2B2b2e", // Apply #2B2b2e color for Facebook and Google buttons
-    },
-    strategy === "apple" && {
-      backgroundColor: "white", // Set Apple button background to white
-     
-    },
-  ];
-
-  const buttonTextStyle = [
-    styles.buttonText,
-    (strategy === "facebook" || strategy === "google") && {
-      color: "white", // Set text color to white for Facebook and Google buttons
-    },
-    strategy === "apple" && {
-      color: "#black", // Set text color for Apple button to #2B2b2e
-    },
-  ];
+  };
 
   return (
     <TouchableOpacity
-      style={containerStyle}
-      onPress={onSocialLoginPress}
+      onPress={handleLogin}
       disabled={isLoading}
+      style={[styles.button, { backgroundColor: getButtonColor(strategy) }]}
     >
-      <View style={styles.iconContainer}>
-        {isLoading ? (
-          <ActivityIndicator size="small" color="black" style={styles.loader} />
-        ) : (
-          buttonIcon()
-        )}
-      </View>
-      <Text style={buttonTextStyle}>{buttonText()}</Text>
+      {isLoading ? (
+        <ActivityIndicator color="#fff" />
+      ) : (
+        <>
+          {buttonIcon() ? (
+            buttonIcon()
+          ) : (
+            <Icon name={getVectorIcon()} size={24} color="white" style={styles.icon} />
+          )}
+          <Text style={styles.buttonText}>{label}</Text>
+        </>
+      )}
     </TouchableOpacity>
   );
 };
 
-export default SocialLoginButton;
+// Function to return button colors
+const getButtonColor = (strategy: string) => {
+  switch (strategy) {
+    case "oauth_google":
+      return "#4285F4";
+    case "oauth_facebook":
+      return "#3b5998";
+    case "oauth_apple":
+      return "#000";
+    default:
+      return "#555"; // Default for email/phone login
+  }
+};
 
 const styles = StyleSheet.create({
-  container: {
-    width: "100%",
-    borderWidth: StyleSheet.hairlineWidth,
-    padding: 11,
-    borderRadius: 16,
-    flexDirection: "row", // Row direction
+  button: {
+    flexDirection: "row",
     alignItems: "center",
-    marginBottom: 1,
-    height: 50, // Set a fixed height for the button
+    padding: 12,
+    borderRadius: 5,
+    justifyContent: "center",
+    marginVertical: 5,
+  },
+  icon: {
+    width: 24,
+    height: 24,
+    marginRight: 10,
   },
   buttonText: {
-    marginLeft: -15, // Add left margin
-    fontSize: 18,
-    fontWeight: "500", // Semi-bold font weight
-    fontFamily: Platform.OS === "ios" ? "SanFrancisco" : "Roboto", // Apply font family based on platform
-    flex: 1, // This will take remaining space and center the text
-    textAlign: "center", // Centers the text
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
   },
   socialIcon: {
-    width: 30,
-    height: 30,
-  },
-  iconContainer: {
-    justifyContent: "center",
-    alignItems: "center",
-    width: 30, // Fixed width to maintain consistency
-    height: 25, // Fixed height to maintain consistency
-    marginLeft: 10,
-    position: "relative", // Ensure ActivityIndicator does not disrupt layout
-  },
-  loader: {
-    position: "absolute", // Keep loader centered in the icon container
+    width: 24,
+    height: 24,
+    marginRight: 10,
   },
 });
+
+export default SocialLoginButton;
