@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, Alert, FlexAlignType, StyleSheet, Platform } from "react-native";
+import { 
+  View, Text, TextInput, TouchableOpacity, 
+  ActivityIndicator, Alert, StyleSheet, Platform 
+} from "react-native";
 import { useForm, Controller } from "react-hook-form";
 import { useRouter } from "expo-router";
 import { useUser } from "@clerk/clerk-expo";
@@ -30,8 +33,14 @@ const CompleteYourAccountScreen = () => {
   const onSubmit = async (data: { firstName: string; lastName: string; username: string }) => {
     const { firstName, lastName, username } = data;
 
+    // Check if any field is empty
     if (!firstName.trim() || !lastName.trim() || !username.trim()) {
       return Alert.alert("Error", "All fields are required.");
+    }
+
+    // Username validation (must be at least 8 characters)
+    if (username.length < 8) {
+      return Alert.alert("Error", "Username must be at least 8 characters long.");
     }
 
     try {
@@ -56,63 +65,72 @@ const CompleteYourAccountScreen = () => {
 
   return (
     <View style={styles.formContainer}>
-  {/* First Name Input */}
-  <Text style={styles.inputLabel}>First Name</Text>
-  <Controller
-    control={control}
-    name="firstName"
-    rules={{ required: "First Name is required" }}
-    render={({ field: { onChange, value } }) => (
-      <TextInput
-        style={styles.input}
-        placeholder="Enter First Name"
-        value={value}
-        onChangeText={onChange}
+      {/* First Name Input */}
+      <Text style={styles.inputLabel}>First Name</Text>
+      <Controller
+        control={control}
+        name="firstName"
+        rules={{ required: "First Name is required" }}
+        render={({ field: { onChange, value } }) => (
+          <TextInput
+            style={styles.input}
+            placeholder="Enter First Name"
+            value={value}
+            onChangeText={onChange}
+          />
+        )}
       />
-    )}
-  />
 
-  {/* Last Name Input */}
-  <Text style={styles.inputLabel}>Last Name</Text>
-  <Controller
-    control={control}
-    name="lastName"
-    rules={{ required: "Last Name is required" }}
-    render={({ field: { onChange, value } }) => (
-      <TextInput
-        style={styles.input}
-        placeholder="Enter Last Name"
-        value={value}
-        onChangeText={onChange}
+      {/* Last Name Input */}
+      <Text style={styles.inputLabel}>Last Name</Text>
+      <Controller
+        control={control}
+        name="lastName"
+        rules={{ required: "Last Name is required" }}
+        render={({ field: { onChange, value } }) => (
+          <TextInput
+            style={styles.input}
+            placeholder="Enter Last Name"
+            value={value}
+            onChangeText={onChange}
+          />
+        )}
       />
-    )}
-  />
 
-  {/* Username Input */}
-  <Text style={styles.inputLabel}>Username</Text>
-  <Controller
-    control={control}
-    name="username"
-    rules={{ required: "Username is required" }}
-    render={({ field: { onChange, value } }) => (
-      <TextInput
-        style={styles.input}
-        placeholder="Choose a Username"
-        value={value}
-        onChangeText={onChange}
+      {/* Username Input */}
+      <Text style={styles.inputLabel}>Username</Text>
+      <Controller
+        control={control}
+        name="username"
+        rules={{
+          required: "Username is required",
+          minLength: {
+            value: 8,
+            message: "Username must be at least 8 characters long",
+          },
+        }}
+        render={({ field: { onChange, value }, fieldState: { error } }) => (
+          <>
+            <TextInput
+              style={styles.input}
+              placeholder="Choose a Username"
+              value={value}
+              onChangeText={onChange}
+            />
+            {/* Show error message if username is too short */}
+            {error && <Text style={styles.errorText}>{error.message}</Text>}
+          </>
+        )}
       />
-    )}
-  />
 
-  <TouchableOpacity
-    style={[styles.button, { opacity: isLoading ? 0.7 : 1 }]}
-    onPress={handleSubmit(onSubmit)}
-    disabled={isLoading}
-  >
-    {isLoading ? <ActivityIndicator size="small" color="white" /> : null}
-    <Text style={styles.buttonText}>{isLoading ? "Loading..." : "Complete Account"}</Text>
-  </TouchableOpacity>
-
+      <TouchableOpacity
+        style={[styles.button, { opacity: isLoading ? 0.7 : 1 }]}
+        onPress={handleSubmit(onSubmit)}
+        disabled={isLoading}
+      >
+        {isLoading ? <ActivityIndicator size="small" color="white" /> : null}
+        <Text style={styles.buttonText}>{isLoading ? "Loading..." : "Complete Account"}</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -169,6 +187,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     marginBottom: 5,
-  }
-  
+  },
+  errorText: {
+    color: "red",
+    fontSize: 14,
+    marginTop: 5,
+  },
 });
