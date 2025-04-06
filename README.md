@@ -1,50 +1,146 @@
-# Welcome to your Expo app 👋
+# Neatify 🚜📉
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A smart cleanliness reporting app that lets users submit campus or municipality-specific garbage reports, and routes them to the relevant authorities. Built with Expo (React Native) for frontend, Node.js (Express) for backend, MongoDB Atlas for data storage, and Clerk for authentication.
 
-## Get started
+---
 
-1. Install dependencies
+## 🔧 Project Structure
 
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-    npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```
+root/
+├── frontend/       # Expo app with Clerk Auth and Report UI
+│   └── .env        # Contains public API keys and Ngrok URL
+├── backend/        # Node.js + Express server
+│   └── .env        # Mongo URI and Clerk secret key
+└── .gitignore       # Secure env files and platform files are ignored
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+---
 
-## Learn more
+## 🔐 Environment Variables
 
-To learn more about developing your project with Expo, look at the following resources:
+### Frontend (`frontend/.env`)
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```env
+EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
+EXPO_PUBLIC_API_BASE_URL=https://your-ngrok-url.ngrok-free.app
+```
 
-## Join the community
+> Prefix with `EXPO_PUBLIC_` to make them available in Expo.
 
-Join our community of developers creating universal apps.
+### Backend (`backend/.env`)
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```env
+PORT=5000
+MONGODB_URI=your_mongodb_atlas_uri
+CLERK_SECRET_KEY=your_clerk_secret_key
+```
+
+---
+
+## 🚀 Getting Started
+
+### 1. Clone the repo
+```bash
+git clone https://github.com/yourusername/neatify.git
+cd neatify
+```
+
+### 2. Install dependencies
+
+**Frontend:**
+```bash
+cd frontend
+npm install
+```
+
+**Backend:**
+```bash
+cd ../backend
+npm install
+```
+
+---
+
+### 3. Set up `.env` files in both folders (see above)
+
+> Be sure to update the Ngrok URL whenever it changes in `frontend/.env`.
+
+---
+
+## 🚡 Run Locally
+
+### Start Backend
+```bash
+cd backend
+npm run dev
+```
+
+### Start Frontend
+```bash
+cd frontend
+npx expo start
+```
+Open in Expo Go or emulator.
+
+---
+
+## 🕵️‍♂️ Features
+- ✅ **User Authentication** with Clerk
+- 🏢 **Campus & Municipality Mode** for reporting
+- 🔒 **Admin Dashboard** routed by email
+- 📃 **Image Upload + Report Storage** in MongoDB
+- 🧬 **Admin Filtering**: Only see reports from your assigned campus
+
+---
+
+## ❌ .gitignore Highlights
+
+```gitignore
+# Local env files
+.env*
+
+# Dependencies and build
+node_modules/
+dist/
+.expo/
+web-build/
+
+# Sensitive native files
+*.pem
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Others
+.DS_Store
+*.tsbuildinfo
+```
+
+> Ensures all secrets are kept out of GitHub.
+
+---
+
+## 📖 Resources
+
+- [Expo Docs](https://docs.expo.dev)
+- [Clerk + Expo](https://clerk.com/docs/expo)
+- [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
+- [Ngrok](https://ngrok.com)
+- [Express Docs](https://expressjs.com)
+
+---
+
+## ✨ Upcoming
+- Notifications for report status
+- Report history
+- Admin response panel
+
+---
+
+## 🚑 Maintainers
+Built with ❤️ by the Neatify.IN team. PRs and suggestions welcome!
+
+--
