@@ -5,9 +5,10 @@ import Report from "../models/reports";
 import { v2 as cloudinary } from "cloudinary";
 import streamifier from "streamifier";
 
+// --- SUBMIT REPORT ---
 export const submitReport = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { description, campus, status } = req.body;
+    const { description, campus, status, category } = req.body;
     const file = req.file;
 
     if (!req.user) {
@@ -15,7 +16,7 @@ export const submitReport = async (req: AuthRequest, res: Response): Promise<voi
       return;
     }
 
-    const userId = req.user.sub; // <- FIXED HERE
+    const userId = req.user.sub;
 
     if (!file || !description || !campus) {
       res.status(400).json({ error: "Missing required fields." });
@@ -37,6 +38,7 @@ export const submitReport = async (req: AuthRequest, res: Response): Promise<voi
           description,
           campus,
           status: status || "pending",
+          ...(category && { category }), // include category only if it's provided
         });
 
         await newReport.save();
@@ -51,11 +53,16 @@ export const submitReport = async (req: AuthRequest, res: Response): Promise<voi
   }
 };
 
+// --- GET REPORTS BY CAMPUS (OPTIONAL CATEGORY FILTER) ---
 export const getReportsByCampus = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { campus } = req.params;
+    const { category } = req.query;
 
-    const reports = await Report.find({ campus }).sort({ createdAt: -1 });
+    const filter: any = { campus };
+    if (category) filter.category = category;
+
+    const reports = await Report.find(filter).sort({ createdAt: -1 });
     res.status(200).json(reports);
   } catch (err) {
     console.error("Error fetching reports:", err);
@@ -63,6 +70,7 @@ export const getReportsByCampus = async (req: AuthRequest, res: Response): Promi
   }
 };
 
+// --- UPDATE REPORT STATUS ---
 export const updateReportStatus = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;

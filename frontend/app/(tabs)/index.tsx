@@ -1,8 +1,7 @@
-// IndexScreen.tsx
 import { useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Platform } from "react-native";
-import CampusMode from '../modes/CampusMode'; // Import CampusMode
-import MunicipalityMode from '../modes/MunicipalityMode'; // Import MunicipalityMode
+import CampusMode from "../modes/CampusMode"; // Import CampusMode
+import MunicipalityMode from "../modes/MunicipalityMode"; // Import MunicipalityMode
 
 const IndexScreen = () => {
   const [selectedMode, setSelectedMode] = useState<"campus" | "municipality" | null>(null);
@@ -11,14 +10,10 @@ const IndexScreen = () => {
     setSelectedMode(mode); // Update selected mode
   };
 
-  const handleSubmit = () => {
-    console.log("Report Submitted");
-  };
-
   return (
     <View style={styles.container}>
       {/* Neatify Title */}
-      <Text style={styles.title}>Neatify</Text>
+      <Text style={styles.title}>Neatify.in</Text>
 
       {/* Mode Selection Buttons */}
       <View style={styles.buttonContainer}>
@@ -38,8 +33,8 @@ const IndexScreen = () => {
       </View>
 
       {/* Render the appropriate mode-specific component */}
-      {selectedMode === "campus" && <CampusMode onSubmit={handleSubmit} />}
-      {selectedMode === "municipality" && <MunicipalityMode onSubmit={handleSubmit} />}
+      {selectedMode === "campus" && <CampusMode />}
+      {selectedMode === "municipality" && <MunicipalityMode />}
     </View>
   );
 };
