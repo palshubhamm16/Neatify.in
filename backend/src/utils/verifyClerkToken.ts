@@ -1,4 +1,7 @@
 import { jwtVerify, createRemoteJWKSet, JWTPayload } from 'jose';
+import dotenv from 'dotenv';
+
+dotenv.config(); // Load env variables (if not already done globally)
 
 export interface UserFromToken {
   email: string;
@@ -13,8 +16,13 @@ interface ClerkJWTPayload extends JWTPayload {
   };
 }
 
-const CLERK_JWKS_URL = 'https://wise-seasnail-82.clerk.accounts.dev/.well-known/jwks.json';
-const jwks = createRemoteJWKSet(new URL(CLERK_JWKS_URL));
+const jwksUrl = process.env.CLERK_JWKS_URL;
+
+if (!jwksUrl) {
+  throw new Error('CLERK_JWKS_URL not defined in environment variables');
+}
+
+const jwks = createRemoteJWKSet(new URL(jwksUrl));
 
 export const verifyClerkToken = async (token: string): Promise<UserFromToken> => {
   try {
