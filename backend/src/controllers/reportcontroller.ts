@@ -4,6 +4,7 @@ import { Response } from "express";
 import Report from "../models/reports";
 import { v2 as cloudinary } from "cloudinary";
 import streamifier from "streamifier";
+import Admin from "../models/admin";
 
 // --- SUBMIT REPORT ---
 export const submitReport = async (req: AuthRequest, res: Response): Promise<void> => {
@@ -53,19 +54,36 @@ export const submitReport = async (req: AuthRequest, res: Response): Promise<voi
   }
 };
 
-// --- GET REPORTS BY CAMPUS (OPTIONAL CATEGORY FILTER) ---
-export const getReportsByCampus = async (req: AuthRequest, res: Response): Promise<void> => {
+
+
+
+// --- GET REPORTS BY LOCATION (AND CATEGORY) FOR LOGGED IN ADMIN ---
+export const getReportsByAdmin = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { campus } = req.params;
-    const { category } = req.query;
+    if (!req.user) {
+      res.status(401).json({ error: "User not authenticated." });
+      return;
+    }
 
-    const filter: any = { campus };
-    if (category) filter.category = category;
+    const { location, category } = req.body;
 
-    const reports = await Report.find(filter).sort({ createdAt: -1 });
+    if (!location) {
+      res.status(400).json({ error: "Location is required." });
+      return;
+    }
+
+    const filter: Record<string, any> = {
+      campus: location, // ✅ Match location directly with 'campus' in report schema
+    };
+
+    if (category) {
+      filter.category = category;
+    }
+
+    const reports = await Report.find(filter).sort({ createdAt: -1});
     res.status(200).json(reports);
   } catch (err) {
-    console.error("Error fetching reports:", err);
+    console.error("❌ Error fetching reports:", err);
     res.status(500).json({ error: "Internal server error." });
   }
 };

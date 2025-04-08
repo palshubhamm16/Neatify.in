@@ -47,6 +47,16 @@ export default function TabLayout() {
           ),
         }}
       />
+      {/* Pickup Tab */}
+      <Tabs.Screen
+        name="pickup"
+        options={{
+          title: "Pickup",
+          tabBarIcon: ({ color }: { color: string }) => (
+            <Ionicons size={28} name="cube-outline" color={color} />
+          ),
+        }}
+      />
       {/* Profile Tab */}
       <Tabs.Screen
         name="profile"

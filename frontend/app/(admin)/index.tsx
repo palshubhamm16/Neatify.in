@@ -1,41 +1,62 @@
-import { useEffect, useState } from "react";
-import { View, Text, StyleSheet, ActivityIndicator, Image, ScrollView, Platform } from "react-native";
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  ActivityIndicator,
+} from "react-native";
+import * as SecureStore from "expo-secure-store";
 import { useAuth } from "@clerk/clerk-expo";
 
-const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
-interface Report {
+type Report = {
   _id: string;
-  imageUrl: string;
-  description: string;
-  location: string;
+  campus: string;
+  category: string;
+  status: string;
   createdAt: string;
-}
+};
 
 const AdminLandingPage = () => {
   const { getToken } = useAuth();
   const [reports, setReports] = useState<Report[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
 
-  const fetchReports = async () => {
+  const fetchReports = async (category: string = "") => {
+    setLoading(true);
+    setError("");
+
     try {
-      const token = await getToken();
+      const token = await getToken({ template: "neatify" });
+      const location = await SecureStore.getItemAsync("admin_location");
 
-      const response = await fetch(`${BASE_URL}/api/reports/admin`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch reports");
+      if (!token || !location) {
+        throw new Error("Missing token or admin location.");
       }
 
+      const response = await fetch(`${API_BASE_URL}/api/reports/fetch`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ location, category }),
+      });
+
       const data = await response.json();
-      setReports(data.reports || []);
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to fetch reports.");
+      }
+
+      setReports(data);
     } catch (err: any) {
-      setError(err.message || "Error fetching reports");
+      setError(err.message || "Something went wrong.");
     } finally {
       setLoading(false);
     }
@@ -45,31 +66,48 @@ const AdminLandingPage = () => {
     fetchReports();
   }, []);
 
+  const renderReport = ({ item }: { item: Report }) => (
+    <View style={styles.reportCard}>
+      <Text style={styles.title}>📍 {item.campus}</Text>
+      <Text>🗂 Category: {item.category}</Text>
+      <Text>Status: {item.status}</Text>
+      <Text>Date: {new Date(item.createdAt).toLocaleString()}</Text>
+    </View>
+  );
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Admin Reports</Text>
+      <Text style={styles.heading}>Admin Reports</Text>
+
+      <View style={styles.tabs}>
+        {["", "campus", "room", "helpdesk"].map((cat) => (
+          <TouchableOpacity
+            key={cat}
+            style={[
+              styles.tab,
+              selectedCategory === cat && styles.activeTab,
+            ]}
+            onPress={() => {
+              setSelectedCategory(cat);
+              fetchReports(cat);
+            }}
+          >
+            <Text style={styles.tabText}>{cat ? cat.toUpperCase() : "ALL"}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
 
       {loading ? (
-        <ActivityIndicator size="large" color="#4CAF50" />
+        <ActivityIndicator size="large" color="#333" />
       ) : error ? (
         <Text style={styles.error}>{error}</Text>
-      ) : reports.length === 0 ? (
-        <Text style={styles.noReports}>No reports available for your campus.</Text>
       ) : (
-        <ScrollView style={styles.scroll}>
-          {reports.map((report) => (
-            <View key={report._id} style={styles.card}>
-              <Image source={{ uri: report.imageUrl }} style={styles.image} />
-              <Text style={styles.label}>Location:</Text>
-              <Text>{report.location}</Text>
-              <Text style={styles.label}>Description:</Text>
-              <Text>{report.description}</Text>
-              <Text style={styles.timestamp}>
-                {new Date(report.createdAt).toLocaleString()}
-              </Text>
-            </View>
-          ))}
-        </ScrollView>
+        <FlatList
+          data={reports}
+          keyExtractor={(item) => item._id}
+          renderItem={renderReport}
+          contentContainerStyle={styles.list}
+        />
       )}
     </View>
   );
@@ -78,50 +116,38 @@ const AdminLandingPage = () => {
 export default AdminLandingPage;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-    paddingTop: Platform.OS === "ios" ? 50 : 20,
-    paddingHorizontal: 20,
-    alignItems: "center",
+  container: { flex: 1, padding: 20, backgroundColor: "#fff" },
+  heading: { fontSize: 24, fontWeight: "bold", marginBottom: 10 },
+  tabs: { flexDirection: "row", marginBottom: 10 },
+  tab: {
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    backgroundColor: "#eee",
+    borderRadius: 20,
+    marginRight: 10,
+  },
+  activeTab: {
+    backgroundColor: "#333",
+  },
+  tabText: {
+    color: "#000",
+    fontWeight: "bold",
+  },
+  list: { paddingBottom: 100 },
+  reportCard: {
+    backgroundColor: "#f8f8f8",
+    padding: 15,
+    borderRadius: 8,
+    marginBottom: 12,
   },
   title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    marginBottom: 20,
-    color: "#4CAF50",
-  },
-  scroll: {
-    width: "100%",
-  },
-  card: {
-    backgroundColor: "#f2f2f2",
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 15,
-  },
-  image: {
-    width: "100%",
-    height: 180,
-    borderRadius: 10,
-    marginBottom: 10,
-  },
-  label: {
-    fontWeight: "bold",
-    marginTop: 5,
-  },
-  timestamp: {
-    marginTop: 5,
-    fontSize: 12,
-    color: "gray",
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 5,
   },
   error: {
     color: "red",
     marginTop: 20,
-  },
-  noReports: {
-    marginTop: 20,
-    fontSize: 16,
-    color: "#888",
+    textAlign: "center",
   },
 });

@@ -32,7 +32,7 @@ app.use(express.json()); // for JSON bodies
 app.use("/api/auth", authRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/campus", campusRoutes);
-app.use("/api/reports", reportsRoutes);
+app.use("/api/reports", reportsRoutes); // ✅ this is correct
 app.use("/api/municipality", municipalityRoutes);
 
 

@@ -1,7 +1,15 @@
 import { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+} from "react-native";
 import { useSignIn } from "@clerk/clerk-expo";
 import { useRouter } from "expo-router";
+import * as SecureStore from "expo-secure-store";
 
 // Access environment variable
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
@@ -22,11 +30,25 @@ const SignInScreen = () => {
         body: JSON.stringify({ email }),
       });
 
-      const { isAdmin } = await response.json();
-      return isAdmin;
-    } catch (err) {
-      console.error("Error checking admin status:", err);
+      const { isAdmin, type, location } = await response.json();
+      console.log("✅ Admin check response:", { isAdmin, type, location });
+
+      if (isAdmin) {
+        await SecureStore.setItemAsync("admin_type", type || "");
+        await SecureStore.setItemAsync("admin_location", location || "");
+
+        const storedType = await SecureStore.getItemAsync("admin_type");
+        const storedLocation = await SecureStore.getItemAsync("admin_location");
+        console.log("📦 Confirmed stored admin_type:", storedType);
+        console.log("📦 Confirmed stored admin_location:", storedLocation);
+
+        return true;
+      }
+
       return false;
+    } catch (err) {
+      console.error("❌ Error checking admin status:", err);
+      throw err;
     }
   };
 
@@ -45,21 +67,28 @@ const SignInScreen = () => {
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
 
-        // 🔍 Check admin status via backend
-        const isAdmin = await checkAdminStatus(email);
+        // ✅ Store email
+        await SecureStore.setItemAsync("user_email", email);
+        console.log("✅ Stored user_email:", email);
 
-        // 🔁 Route accordingly
-        if (isAdmin) {
-          router.replace("./(admin)");
-        } else {
-          router.replace("./(tabs)");
+        // 🔍 Check admin status
+        try {
+          const isAdmin = await checkAdminStatus(email);
+          if (isAdmin) {
+            router.replace("./(admin)");
+          } else {
+            router.replace("./(tabs)");
+          }
+        } catch (adminErr) {
+          setError("Admin setup incomplete. Please contact support.");
+          console.error("❌ Admin setup error:", adminErr);
         }
       } else {
         console.log("Sign-in incomplete:", result);
       }
     } catch (err) {
       setError("Invalid credentials. Please try again.");
-      console.error("Sign-in error:", err);
+      console.error("❌ Sign-in error:", err);
     } finally {
       setLoading(false);
     }

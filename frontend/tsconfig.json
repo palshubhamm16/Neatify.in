@@ -4,6 +4,7 @@
     "jsx": "react-native",  // ✅ For React Native projects
     "allowJs": true,  
     "moduleResolution": "node",
+    "typeRoots": ["./types", "./node_modules/@types"],
     "strict": true,
     "paths": {
       "@/*": [
