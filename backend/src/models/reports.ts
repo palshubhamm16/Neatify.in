@@ -1,12 +1,18 @@
 import mongoose from "mongoose";
 
-const ReportSchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  imageUrl: { type: String, required: true },
-  description: { type: String, required: true },
-  status: { type: String, enum: ["Pending", "Resolved"], default: "Pending" },
-  campus: { type: String, required: true }, // Link reports to a specific campus
-}, { timestamps: true });
+const reportSchema = new mongoose.Schema(
+  {
+    userId: { type: String, required: true },
+    campus: { type: String, required: true },
+    imageUrl: { type: String, required: true },
+    description: { type: String },
+    status: {
+      type: String,
+      enum: ["pending", "ongoing", "completed"],
+      default: "pending",
+    },
+  },
+  { timestamps: true }
+);
 
-export const Report = mongoose.model("Report", ReportSchema);
-export default Report;
+export default mongoose.model("Report", reportSchema);

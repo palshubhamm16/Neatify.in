@@ -13,6 +13,8 @@ import { ClerkProvider, ClerkLoaded, useAuth, useUser } from "@clerk/clerk-expo"
 
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { tokenCache } from "@/utils/cache";
+import 'react-native-gesture-handler';
+import 'react-native-reanimated'; // Needed for dropdown animations
 
 // Prevent splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();

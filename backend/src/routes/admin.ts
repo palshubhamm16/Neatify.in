@@ -1,18 +1,18 @@
 import express, { Request, Response, NextFunction } from "express";
-import { Report } from "../models/reports";
-import authMiddleware from "../middlewares/authMiddleware";
+import Report from "../models/reports";
+import { authenticateUser } from "../middlewares/authMiddleware";
 
 const router = express.Router();
 
 // Extend Express Request type to include `user`
 interface AuthRequest extends Request {
-  user?: { campus: string };
+  user?: { _id: string; email: string; campus: string };
 }
 
 // Get reports for the admin's campus
 router.get(
   "/admin/reports",
-  authMiddleware ,
+  authenticateUser,
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const authReq = req as AuthRequest; // Type assertion

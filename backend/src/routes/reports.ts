@@ -1,28 +1,19 @@
+// src/routes/reports.ts
 import express from "express";
-import Report from "../models/reports";
+import multer from "multer";
+import { authenticateUser } from "../middlewares/authMiddleware";
+import {
+  submitReport,
+  getReportsByCampus,
+  updateReportStatus,
+} from "../controllers/reportcontroller";
 
 const router = express.Router();
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
 
-// Submit a Report
-router.post("/", async (req, res) => {
-  try {
-    const { userId, imageUrl, location, description } = req.body;
-    const report = await Report.create({ userId, imageUrl, location, description });
-
-    res.status(201).json({ message: "Report submitted", report });
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error });
-  }
-});
-
-// Get All Reports for Admin
-router.get("/", async (req, res) => {
-  try {
-    const reports = await Report.find().populate("userId", "name email");
-    res.status(200).json(reports);
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error });
-  }
-});
+router.post("/", authenticateUser, upload.single("image"), submitReport);
+router.get("/:campus", authenticateUser, getReportsByCampus);
+router.patch("/:id", authenticateUser, updateReportStatus);
 
 export default router;

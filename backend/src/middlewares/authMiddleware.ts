@@ -1,27 +1,30 @@
-import { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
+import { Request, Response, NextFunction } from 'express';
+import { verifyClerkToken, UserFromToken } from '../utils/verifyClerkToken';
 
-interface AuthRequest extends Request {
-  user?: { campus: string };
+export interface AuthRequest extends Request {
+  user?: UserFromToken;
 }
 
-const authMiddleware = (req: AuthRequest, res: Response, next: NextFunction): void => {
-  const token = req.header("Authorization")?.replace("Bearer ", "");
+export const authenticateUser = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  const authHeader = req.headers.authorization;
 
-  if (!token) {
-    res.status(401).json({ message: "No token, authorization denied" });
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    res.status(401).json({ message: 'Unauthorized: No token provided' });
     return;
   }
 
+  const token = authHeader.split(' ')[1];
+
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { campus: string };
-    req.user = decoded; // Attach user data to request
-    next(); // Move to next middleware
-  } catch (err) {
-    res.status(401).json({ message: "Invalid token" });
-    return; // Explicitly return to satisfy TypeScript
+    const user = await verifyClerkToken(token);
+    req.user = user;
+    next();
+  } catch (error) {
+    console.error('Authentication error:', error);
+    res.status(401).json({ message: 'Unauthorized: Invalid token' });
   }
 };
-
-export default authMiddleware;
-export { authMiddleware };

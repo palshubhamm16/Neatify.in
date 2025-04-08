@@ -1,39 +1,42 @@
 import React, { useState } from "react";
-import { TouchableOpacity, Text, Image, ActivityIndicator, StyleSheet } from "react-native";
-import Icon from "react-native-vector-icons/FontAwesome"; // For fallback icons
-import { Ionicons } from "@expo/vector-icons"; // Import Ionicons
-import { useOAuth, useSignIn } from "@clerk/clerk-expo";
+import {
+  TouchableOpacity,
+  Text,
+  Image,
+  ActivityIndicator,
+  StyleSheet,
+} from "react-native";
+import Icon from "react-native-vector-icons/FontAwesome";
+import { Ionicons } from "@expo/vector-icons";
+import { useOAuth, useAuth } from "@clerk/clerk-expo";
 import { useRouter } from "expo-router";
 import * as Linking from "expo-linking";
-import googleLogo from "../assets/images/google.png"
+import googleLogo from "../assets/images/google.png";
 
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
 interface SocialLoginButtonProps {
-  strategy: "oauth_google" | "oauth_facebook" | "oauth_apple" | "email" | "phone";
+  strategy: "oauth_google" | "oauth_facebook" | "oauth_apple";
   label: string;
 }
 
 const SocialLoginButton: React.FC<SocialLoginButtonProps> = ({ strategy, label }) => {
   const [isLoading, setIsLoading] = useState(false);
-  const { startOAuthFlow } = useOAuth({ strategy: strategy as "oauth_google" | "oauth_facebook" | "oauth_apple" });
-  const { signIn } = useSignIn();
+  const { startOAuthFlow } = useOAuth({ strategy });
+  const { getToken } = useAuth();
   const router = useRouter();
 
-  // Function to get the appropriate icon based on strategy
+  const buttonIcon = () => {
+    if (strategy === "oauth_facebook") {
+      return <Ionicons name="logo-facebook" size={24} color="white" />;
+    } else if (strategy === "oauth_google") {
+      return <Image source={googleLogo} style={styles.socialIcon} resizeMode="contain" />;
+    } else if (strategy === "oauth_apple") {
+      return <Ionicons name="logo-apple" size={24} color="white" />;
+    }
+    return null;
+  };
 
-const buttonIcon = () => {
-  if (strategy === "oauth_facebook") {
-    return <Ionicons name="logo-facebook" size={24} color="white" />;
-  } else if (strategy === "oauth_google") {
-    return <Image source={googleLogo} style={styles.socialIcon} resizeMode="contain" />;
-  } else if (strategy === "oauth_apple") {
-    return <Ionicons name="logo-apple" size={24} color="white" />;
-  }
-  return null;
-};
-  
-
-  // Function to get the appropriate fallback vector icon
   const getVectorIcon = () => {
     switch (strategy) {
       case "oauth_google":
@@ -43,7 +46,7 @@ const buttonIcon = () => {
       case "oauth_apple":
         return "apple";
       default:
-        return "envelope"; // Default email icon
+        return "envelope";
     }
   };
 
@@ -51,32 +54,26 @@ const buttonIcon = () => {
     setIsLoading(true);
 
     try {
-      if (!signIn) {
-        throw new Error("Sign-in instance is undefined.");
-      }
+      const { createdSessionId, setActive } = await startOAuthFlow({
+        redirectUrl: Linking.createURL("/dashboard"),
+      });
 
-      if (strategy === "email" || strategy === "phone") {
-        const identifier = strategy === "email" ? "test@example.com" : "+1234567890";
-        const signInResult = await signIn.create({ identifier });
+      if (createdSessionId && setActive) {
+        await setActive({ session: createdSessionId });
 
-        if (!signInResult.supportedFirstFactors || signInResult.supportedFirstFactors.length === 0) {
-          throw new Error("No supported first factors available.");
-        }
+        // Wait for the JWT token and capture it
+        const token = await getToken();
+        if (!token) throw new Error("Could not fetch token after login");
 
-        router.push("./auth/verify");
-      } else {
-        const { createdSessionId, setActive } = await startOAuthFlow({
-          redirectUrl: Linking.createURL("/dashboard"),
-        });
+        // Log the token to the console for use in debugging or future needs
+        console.log("Captured Clerk JWT Token:", token);
 
-        if (createdSessionId) {
-          setActive?.({ session: createdSessionId });
-        }
+        // Proceed to router logic based on user type
+        router.replace("./(tabs)");  // You can modify this if needed (e.g., based on admin status)
       }
     } catch (err) {
       console.error("Authentication Error:", err);
-      const errorMessage = err instanceof Error ? err.message : "An error occurred.";
-      alert("Login Failed: " + errorMessage);
+      alert("Login Failed: " + (err instanceof Error ? err.message : "An error occurred."));
     } finally {
       setIsLoading(false);
     }
@@ -92,9 +89,7 @@ const buttonIcon = () => {
         <ActivityIndicator color="#fff" />
       ) : (
         <>
-          {buttonIcon() ? (
-            buttonIcon()
-          ) : (
+          {buttonIcon() ?? (
             <Icon name={getVectorIcon()} size={24} color="white" style={styles.icon} />
           )}
           <Text style={styles.buttonText}>{label}</Text>
@@ -104,7 +99,6 @@ const buttonIcon = () => {
   );
 };
 
-// Function to return button colors
 const getButtonColor = (strategy: string) => {
   switch (strategy) {
     case "oauth_google":
@@ -114,7 +108,7 @@ const getButtonColor = (strategy: string) => {
     case "oauth_apple":
       return "#000";
     default:
-      return "#555"; // Default for email/phone login
+      return "#555";
   }
 };
 
