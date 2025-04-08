@@ -36,7 +36,7 @@ const MunicipalityMode: React.FC = () => {
   useEffect(() => {
     const fetchMunicipalities = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/campus/list`);
+        const response = await fetch(`${API_BASE_URL}/api/municipality/list`);
         const data = await response.json();
         const formatted = data.map((m: { name: string }) => ({
           label: m.name,

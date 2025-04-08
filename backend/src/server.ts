@@ -9,6 +9,8 @@ import authRoutes from "./routes/auth";
 import uploadRoutes from "./routes/upload"; // ✅ Cloudinary uploads
 import campusRoutes from "./routes/campus";
 import reportsRoutes from "./routes/reports";
+import municipalityRoutes from "./routes/municipality";
+
 
 const app = express();
 
@@ -31,6 +33,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/campus", campusRoutes);
 app.use("/api/reports", reportsRoutes);
+app.use("/api/municipality", municipalityRoutes);
+
 
 // 🌱 MongoDB connection
 const mongoURI = process.env.MONGO_URI;

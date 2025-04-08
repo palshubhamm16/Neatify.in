@@ -14,18 +14,35 @@ async function run() {
     await mongoose.connect(uri);
     console.log("✅ Connected to MongoDB");
 
-    const email = "shubmusic16@gmail.com";
-    const campus = "IIT Delhi"; // ✅ ADD YOUR CAMPUS HERE
+    const admins = [
+      {
+        email: "shubmusic16@gmail.com",
+        type: "campus",
+        location: "Bennett University",
+      },
+      {
+        email: "ctfasce@gmail.com",
+        type: "campus",
+        location: "Sharda University",
+      },
+      {
+        email: "palshubhamm1616@gmail.com",
+        type: "municipality",
+        location: "TechZone II",
+      },
+    ];
 
-    const existingAdmin = await Admin.findOne({ email, campus });
-    if (existingAdmin) {
-      console.warn(`⚠️ Admin already exists: ${email} at ${campus}`);
-    } else {
-      await Admin.create({ email, campus });
-      console.log(`✅ Inserted admin: ${email} at ${campus}`);
+    for (const admin of admins) {
+      const existing = await Admin.findOne({ email: admin.email, location: admin.location });
+      if (existing) {
+        console.warn(`⚠️ Admin already exists: ${admin.email} at ${admin.location}`);
+      } else {
+        await Admin.create(admin);
+        console.log(`✅ Inserted admin: ${admin.email} at ${admin.location}`);
+      }
     }
   } catch (err) {
-    console.error("❌ Failed to insert admin:", err);
+    console.error("❌ Failed to insert admins:", err);
   } finally {
     await mongoose.disconnect();
     console.log("🔌 Disconnected from MongoDB");

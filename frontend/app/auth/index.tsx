@@ -37,7 +37,7 @@ const AuthScreen = () => {
       <View style={[styles.headingContainer]}>
         {startTyping && (
           <Typewriter style={styles.label} typing={1} minDelay={20}>
-            Neatify
+            Neatify.in
           </Typewriter>
         )}
       </View>

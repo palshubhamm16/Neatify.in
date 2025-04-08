@@ -21,7 +21,7 @@ router.post("/check-admin", async (req: Request, res: Response): Promise<void> =
     console.log("🔍 Admin found:", admin);
 
     if (admin) {
-      res.json({ isAdmin: true, campus: admin.campus });
+      res.json({ isAdmin: true, location: admin.location, type: admin.type });
     } else {
       res.json({ isAdmin: false });
     }
