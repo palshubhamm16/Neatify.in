@@ -16,7 +16,7 @@ async function run() {
 
     const admins = [
       {
-        email: "shubmusic16@gmail.com",
+        email: "offical.saurabh.singh24@gmail.com",
         type: "campus",
         location: "Bennett University",
       },

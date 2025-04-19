@@ -6,6 +6,7 @@ import {
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
+  Image,
 } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import { useAuth } from "@clerk/clerk-expo";
@@ -18,6 +19,9 @@ type Report = {
   category: string;
   status: string;
   createdAt: string;
+  imageUrl: string;
+  description: string;
+  userId: string;
 };
 
 const AdminLandingPage = () => {
@@ -69,9 +73,18 @@ const AdminLandingPage = () => {
   const renderReport = ({ item }: { item: Report }) => (
     <View style={styles.reportCard}>
       <Text style={styles.title}>📍 {item.campus}</Text>
+      <Text>🆔 User ID: {item.userId}</Text>
       <Text>🗂 Category: {item.category}</Text>
       <Text>Status: {item.status}</Text>
+      <Text>📝 Description: {item.description}</Text>
       <Text>Date: {new Date(item.createdAt).toLocaleString()}</Text>
+      {item.imageUrl && (
+        <Image
+          source={{ uri: item.imageUrl }}
+          style={styles.imagePreview}
+          resizeMode="cover"
+        />
+      )}
     </View>
   );
 
@@ -83,16 +96,15 @@ const AdminLandingPage = () => {
         {["", "campus", "room", "helpdesk"].map((cat) => (
           <TouchableOpacity
             key={cat}
-            style={[
-              styles.tab,
-              selectedCategory === cat && styles.activeTab,
-            ]}
+            style={[styles.tab, selectedCategory === cat && styles.activeTab]}
             onPress={() => {
               setSelectedCategory(cat);
               fetchReports(cat);
             }}
           >
-            <Text style={styles.tabText}>{cat ? cat.toUpperCase() : "ALL"}</Text>
+            <Text style={styles.tabText}>
+              {cat ? cat.toUpperCase() : "ALL"}
+            </Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -144,6 +156,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     marginBottom: 5,
+  },
+  imagePreview: {
+    marginTop: 10,
+    width: "100%",
+    height: 200,
+    borderRadius: 8,
+    backgroundColor: "#ccc",
   },
   error: {
     color: "red",
