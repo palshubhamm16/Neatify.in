@@ -7,15 +7,29 @@ const reportSchema = new mongoose.Schema(
     campus: { type: String, required: true },
     imageUrl: { type: String, required: true },
     description: { type: String },
+
     category: {
       type: String,
-      enum: ["campus", "room", "helpdesk"], // Valid values
-      required: false, // Now optional
+      enum: ["campus", "room", "helpdesk"],
+      required: false,
     },
+
     status: {
       type: String,
       enum: ["pending", "ongoing", "completed"],
       default: "pending",
+    },
+
+    // ⛳ Simple coordinates field instead of geoJSON
+    coordinates: {
+      type: [Number], // [longitude, latitude]
+      required: false,
+    },
+
+    // 🏢 For campus reports
+    area: {
+      type: String,
+      required: false,
     },
   },
   { timestamps: true }

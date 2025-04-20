@@ -6,10 +6,11 @@ import { v2 as cloudinary } from "cloudinary";
 import streamifier from "streamifier";
 import Admin from "../models/admin";
 
+
 // --- SUBMIT REPORT ---
 export const submitReport = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { description, campus, status, category } = req.body;
+    const { description, campus, status, category, coordinates, area } = req.body;
     const file = req.file;
 
     if (!req.user) {
@@ -39,7 +40,11 @@ export const submitReport = async (req: AuthRequest, res: Response): Promise<voi
           description,
           campus,
           status: status || "pending",
-          ...(category && { category }), // include category only if it's provided
+          ...(category && { category }),
+          ...(coordinates && Array.isArray(coordinates) && coordinates.length === 2 && {
+            coordinates,
+          }),
+          ...(area && { area }),
         });
 
         await newReport.save();
@@ -53,7 +58,6 @@ export const submitReport = async (req: AuthRequest, res: Response): Promise<voi
     res.status(500).json({ error: "Internal server error." });
   }
 };
-
 
 
 

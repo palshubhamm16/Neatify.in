@@ -1,9 +1,9 @@
+// MunicipalityMode.tsx
 import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
   TextInput,
-  Button,
   Image,
   StyleSheet,
   ActivityIndicator,
@@ -13,11 +13,15 @@ import {
   TouchableOpacity,
   Keyboard,
   TouchableWithoutFeedback,
+  Modal,
+  KeyboardAvoidingView,
 } from "react-native";
 import DropDownPicker from "react-native-dropdown-picker";
 import * as ImagePicker from "expo-image-picker";
+import * as Location from "expo-location";
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import MapPickerModal from "../../components/MapPickerModal"; // 👈 Add this import
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
@@ -26,8 +30,11 @@ const MunicipalityMode: React.FC = () => {
   const [selectedMunicipality, setSelectedMunicipality] = useState<string | null>(null);
   const [municipalityList, setMunicipalityList] = useState<{ label: string; value: string }[]>([]);
   const [description, setDescription] = useState("");
+  const [area, setArea] = useState("");
   const [image, setImage] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [mapModalVisible, setMapModalVisible] = useState(false);
 
   const { getToken } = useAuth();
   const { user } = useUser();
@@ -96,9 +103,28 @@ const MunicipalityMode: React.FC = () => {
     }
   };
 
+  const fetchLocation = async () => {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Permission to access location was denied");
+        return;
+      }
+
+      const loc = await Location.getCurrentPositionAsync({});
+      setLocation({
+        latitude: loc.coords.latitude,
+        longitude: loc.coords.longitude,
+      });
+    } catch (err) {
+      console.error("❌ Error fetching location:", err);
+      Alert.alert("Could not fetch location");
+    }
+  };
+
   const handleSubmit = async () => {
-    if (!selectedMunicipality || !description || !image) {
-      Alert.alert("Please fill all fields and pick an image.");
+    if (!selectedMunicipality || !description || !area || !image || !location) {
+      Alert.alert("Please fill all fields, upload an image, and get your location.");
       return;
     }
 
@@ -108,7 +134,10 @@ const MunicipalityMode: React.FC = () => {
 
       const formData = new FormData();
       formData.append("description", description);
-      formData.append("campus", selectedMunicipality); // still using 'campus' field in backend
+      formData.append("area", area);
+      formData.append("campus", selectedMunicipality);
+      formData.append("latitude", String(location.latitude));
+      formData.append("longitude", String(location.longitude));
       formData.append("image", {
         uri: image,
         name: "report.jpg",
@@ -132,7 +161,9 @@ const MunicipalityMode: React.FC = () => {
 
       Alert.alert("✅ Report submitted!");
       setDescription("");
+      setArea("");
       setImage(null);
+      setLocation(null);
     } catch (error) {
       console.error("❌ Error submitting report:", error);
       Alert.alert("Submission failed. Please try again.");
@@ -143,149 +174,185 @@ const MunicipalityMode: React.FC = () => {
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>Municipality Report</Text>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 80 : 0}
+      >
+        <ScrollView
+          contentContainerStyle={[styles.container, { flexGrow: 1, paddingBottom: 100 }]}
+          keyboardShouldPersistTaps="handled"
+        >
+          <Text style={styles.title}>Municipality Report</Text>
 
-        <View style={{ zIndex: 1000, marginBottom: 30 }}>
-          <DropDownPicker
-            open={open}
-            value={selectedMunicipality}
-            items={municipalityList}
-            setOpen={setOpen}
-            setValue={setSelectedMunicipality}
-            setItems={setMunicipalityList}
-            onChangeValue={handleMunicipalitySelect}
-            searchable={true}
-            placeholder="Choose your municipality"
-            listMode="MODAL"
-            modalProps={{ animationType: "slide" }}
-            modalContentContainerStyle={{ backgroundColor: "#fff", padding: 20 }}
-            style={{ borderColor: "#ccc" }}
-            textStyle={{ color: "#000" }}
+          <View style={{ zIndex: 1000, marginBottom: 30 }}>
+            <DropDownPicker
+              open={open}
+              value={selectedMunicipality}
+              items={municipalityList}
+              setOpen={setOpen}
+              setValue={setSelectedMunicipality}
+              setItems={setMunicipalityList}
+              onChangeValue={handleMunicipalitySelect}
+              searchable={true}
+              placeholder="Choose your municipality"
+              listMode="MODAL"
+              modalProps={{ animationType: "slide" }}
+              modalContentContainerStyle={{ backgroundColor: "#fff", padding: 20 }}
+              style={{ borderColor: "#ccc" }}
+              textStyle={{ color: "#000" }}
+            />
+          </View>
+
+          <TextInput
+            style={[styles.input, { height: 60, color: "#000" }]}
+            placeholder="Enter report description"
+            placeholderTextColor="#888"
+            multiline
+            numberOfLines={2}
+            maxLength={200}
+            value={description}
+            onChangeText={setDescription}
           />
-        </View>
 
-        <TextInput
-          style={[styles.input, { height: 60, color: "#000" }]}
-          placeholder="Enter report description"
-          placeholderTextColor="#888"
-          multiline
-          numberOfLines={2}
-          maxLength={200}
-          value={description}
-          onChangeText={setDescription}
-        />
-
-        <View style={styles.imagePickerArea}>
-          <Text style={styles.label}>
-            {image ? "Selected Image:" : "No image selected"}
-          </Text>
-
-          {image ? (
-            <Image source={{ uri: image }} style={styles.image} />
-          ) : (
-            <View style={styles.placeholder}>
-              <Text style={styles.placeholderText}>No image selected</Text>
-            </View>
-          )}
+          <TextInput
+            style={[styles.input, { height: 50, color: "#000" }]}
+            placeholder="Enter area name"
+            placeholderTextColor="#888"
+            value={area}
+            onChangeText={setArea}
+          />
 
           <View style={styles.buttonRow}>
-            <TouchableOpacity onPress={pickImageFromCamera} style={styles.optionButton}>
-              <Text style={styles.optionText}>📸 Take Photo</Text>
+            <TouchableOpacity onPress={fetchLocation} style={styles.optionButton}>
+              <Text style={styles.optionText}>📍 Get Current Location</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={pickImageFromGallery} style={styles.optionButton}>
-              <Text style={styles.optionText}>🖼️ Gallery</Text>
+
+            <TouchableOpacity onPress={() => setMapModalVisible(true)} style={styles.optionButton}>
+              <Text style={styles.optionText}>🗺️ Pick Location from Map</Text>
             </TouchableOpacity>
           </View>
-        </View>
 
-        {uploading ? (
-          <ActivityIndicator size="large" color="#4CAF50" style={{ marginTop: 20 }} />
-        ) : (
-          <TouchableOpacity onPress={handleSubmit} style={styles.submitButton}>
-            <Text style={styles.submitText}>Submit Report</Text>
-          </TouchableOpacity>
-        )}
-      </ScrollView>
+          {location && (
+            <Text style={{ color: "#555", marginBottom: 10 }}>
+              Latitude: {location.latitude.toFixed(5)}, Longitude: {location.longitude.toFixed(5)}
+            </Text>
+          )}
+
+          <View style={styles.imagePickerArea}>
+            <Text style={styles.label}>
+              {image ? "Selected Image:" : "No image selected"}
+            </Text>
+
+            {image ? (
+              <Image source={{ uri: image }} style={styles.image} />
+            ) : (
+              <View style={styles.placeholder}>
+                <Text style={styles.placeholderText}>No image selected</Text>
+              </View>
+            )}
+
+            <View style={styles.buttonRow}>
+              <TouchableOpacity onPress={pickImageFromCamera} style={styles.optionButton}>
+                <Text style={styles.optionText}>📸 Take Photo</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={pickImageFromGallery} style={styles.optionButton}>
+                <Text style={styles.optionText}>🖼️ Gallery</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {uploading ? (
+            <ActivityIndicator size="large" color="#4CAF50" style={{ marginTop: 20 }} />
+          ) : (
+            <TouchableOpacity onPress={handleSubmit} style={styles.submitButton}>
+              <Text style={styles.submitText}>Submit Report</Text>
+            </TouchableOpacity>
+          )}
+
+          <Modal visible={mapModalVisible} animationType="slide">
+            <MapPickerModal
+              onClose={() => setMapModalVisible(false)}
+              onLocationSelect={(coords) => {
+                setLocation(coords);
+                setMapModalVisible(false);
+              }}
+            />
+          </Modal>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </TouchableWithoutFeedback>
   );
 };
 
-export default MunicipalityMode;
-
 const styles = StyleSheet.create({
   container: {
-    paddingTop: Platform.OS === "ios" ? 60 : 40,
-    paddingHorizontal: 20,
-    backgroundColor: "#fff",
-    paddingBottom: 150,
+    padding: 20,
+    backgroundColor: "#f9f9f9",
   },
   title: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: "bold",
-    marginBottom: 15,
-    textAlign: "center",
+    marginBottom: 20,
     color: "#333",
-  },
-  label: {
-    fontWeight: "bold",
-    marginBottom: 5,
-    color: "#555",
   },
   input: {
     borderWidth: 1,
     borderColor: "#ccc",
     borderRadius: 8,
     padding: 10,
-    marginBottom: 15,
-    textAlignVertical: "top",
-  },
-  imagePickerArea: {
     marginBottom: 20,
-  },
-  image: {
-    width: "100%",
-    height: 200,
-    borderRadius: 10,
-    marginTop: 5,
-  },
-  placeholder: {
-    borderWidth: 2,
-    borderColor: "#aaa",
-    borderRadius: 10,
-    borderStyle: "dashed",
-    padding: 40,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#fafafa",
-  },
-  placeholderText: {
-    color: "#888",
+    backgroundColor: "#fff",
   },
   buttonRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 10,
-    gap: 10,
+    marginBottom: 20,
   },
   optionButton: {
     flex: 1,
-    backgroundColor: "#e0e0e0",
-    padding: 12,
+    marginHorizontal: 5,
+    padding: 10,
+    backgroundColor: "#4CAF50",
     borderRadius: 8,
     alignItems: "center",
   },
   optionText: {
-    fontSize: 14,
-    fontWeight: "600",
+    color: "#fff",
+    fontWeight: "bold",
+  },
+  imagePickerArea: {
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 16,
+    marginBottom: 10,
     color: "#333",
   },
-  submitButton: {
-    marginTop: 20,
-    backgroundColor: "#388E3C",
-    padding: 15,
-    borderRadius: 10,
+  image: {
+    width: "100%",
+    height: 200,
+    borderRadius: 8,
+    marginBottom: 10,
+  },
+  placeholder: {
+    width: "100%",
+    height: 200,
+    borderRadius: 8,
+    backgroundColor: "#eee",
+    justifyContent: "center",
     alignItems: "center",
+    marginBottom: 10,
+  },
+  placeholderText: {
+    color: "#888",
+  },
+  submitButton: {
+    padding: 15,
+    backgroundColor: "#4CAF50",
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 10,
   },
   submitText: {
     color: "#fff",
@@ -293,3 +360,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
+
+export default MunicipalityMode;

@@ -25,6 +25,7 @@ const CampusMode: React.FC = () => {
   const [selectedCampus, setSelectedCampus] = useState<string | null>(null);
   const [campusList, setCampusList] = useState<{ label: string; value: string }[]>([]);
   const [description, setDescription] = useState("");
+  const [area, setArea] = useState("");
   const [image, setImage] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [category, setCategory] = useState<"campus" | "room" | "helpdesk" | null>(null);
@@ -91,8 +92,8 @@ const CampusMode: React.FC = () => {
   };
 
   const handleSubmit = async () => {
-    if (!selectedCampus || !description || !image || !category) {
-      Alert.alert("Missing info", "Please fill all fields, select a category, and upload an image.");
+    if (!selectedCampus || !description || !area || !image || !category) {
+      Alert.alert("Missing info", "Please fill all fields, including area, select a category, and upload an image.");
       return;
     }
 
@@ -104,6 +105,7 @@ const CampusMode: React.FC = () => {
       formData.append("description", description);
       formData.append("campus", selectedCampus);
       formData.append("category", category);
+      formData.append("area", area);
       formData.append("image", {
         uri: image,
         name: "report.jpg",
@@ -127,6 +129,7 @@ const CampusMode: React.FC = () => {
 
       Alert.alert("✅ Success", "Report submitted successfully!");
       setDescription("");
+      setArea("");
       setImage(null);
       setCategory(null);
     } catch (err) {
@@ -170,6 +173,16 @@ const CampusMode: React.FC = () => {
           maxLength={200}
           value={description}
           onChangeText={setDescription}
+        />
+
+        <TextInput
+          style={[styles.input, { height: 60, color: "#000" }]}
+          placeholder="Enter report area"
+          placeholderTextColor="#888"
+          multiline
+          numberOfLines={2}
+          value={area}
+          onChangeText={setArea}
         />
 
         <Text style={styles.label}>Select Category</Text>
@@ -304,31 +317,26 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   photoButtonText: {
-    color: "#000",
-    fontWeight: "500",
+    color: "#444",
+  },
+  submitButton: {
+    backgroundColor: "#4CAF50",
+    padding: 15,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  submitButtonText: {
+    fontSize: 18,
+    color: "#fff",
   },
   imagePreview: {
     marginBottom: 15,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    padding: 5,
-    borderRadius: 10,
+    alignItems: "center",
   },
   image: {
-    width: "100%",
+    width: 200,
     height: 200,
     borderRadius: 10,
-  },
-  submitButton: {
-    backgroundColor: "#388E3C",
-    padding: 15,
-    borderRadius: 10,
-    alignItems: "center",
-    marginTop: 10,
-  },
-  submitButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 16,
+    resizeMode: "cover",
   },
 });
