@@ -8,9 +8,10 @@ import Admin from "../models/admin";
 
 
 // --- SUBMIT REPORT ---
+// --- SUBMIT REPORT ---
 export const submitReport = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { description, campus, status, category, coordinates, area } = req.body;
+    const { description, campus, status, category, area } = req.body;
     const file = req.file;
 
     if (!req.user) {
@@ -24,6 +25,12 @@ export const submitReport = async (req: AuthRequest, res: Response): Promise<voi
       res.status(400).json({ error: "Missing required fields." });
       return;
     }
+
+    // Parse coordinates from body
+    const latitude = parseFloat(req.body.latitude);
+    const longitude = parseFloat(req.body.longitude);
+    const coords =
+      !isNaN(latitude) && !isNaN(longitude) ? [longitude, latitude] : undefined;
 
     const uploadStream = cloudinary.uploader.upload_stream(
       { resource_type: "image", folder: "reports" },
@@ -41,9 +48,7 @@ export const submitReport = async (req: AuthRequest, res: Response): Promise<voi
           campus,
           status: status || "pending",
           ...(category && { category }),
-          ...(coordinates && Array.isArray(coordinates) && coordinates.length === 2 && {
-            coordinates,
-          }),
+          ...(coords && { coordinates: coords }),
           ...(area && { area }),
         });
 
@@ -69,7 +74,7 @@ export const getReportsByAdmin = async (req: AuthRequest, res: Response): Promis
       return;
     }
 
-    const { location, category } = req.body;
+    const { location, category, coordinates, area } = req.body;
 
     if (!location) {
       res.status(400).json({ error: "Location is required." });
@@ -77,20 +82,29 @@ export const getReportsByAdmin = async (req: AuthRequest, res: Response): Promis
     }
 
     const filter: Record<string, any> = {
-      campus: location, // ✅ Match location directly with 'campus' in report schema
+      campus: location,
     };
 
     if (category) {
       filter.category = category;
     }
 
-    const reports = await Report.find(filter).sort({ createdAt: -1});
+    if (area) {
+      filter.area = area;
+    }
+
+    if (coordinates && Array.isArray(coordinates) && coordinates.length === 2) {
+      filter.coordinates = coordinates;
+    }
+
+    const reports = await Report.find(filter).sort({ createdAt: -1 });
     res.status(200).json(reports);
   } catch (err) {
     console.error("❌ Error fetching reports:", err);
     res.status(500).json({ error: "Internal server error." });
   }
 };
+
 
 // --- UPDATE REPORT STATUS ---
 export const updateReportStatus = async (req: AuthRequest, res: Response): Promise<void> => {

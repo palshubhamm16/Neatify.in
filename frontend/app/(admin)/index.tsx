@@ -22,6 +22,8 @@ type Report = {
   imageUrl: string;
   description: string;
   userId: string;
+  area?: string;
+  coordinates?: number[];
 };
 
 const AdminLandingPage = () => {
@@ -78,6 +80,12 @@ const AdminLandingPage = () => {
       <Text>Status: {item.status}</Text>
       <Text>📝 Description: {item.description}</Text>
       <Text>Date: {new Date(item.createdAt).toLocaleString()}</Text>
+      {item.area && <Text>🏢 Area: {item.area}</Text>}
+      {item.coordinates && item.coordinates.length === 2 && (
+        <Text>
+          📌 Coordinates: {item.coordinates[0].toFixed(5)}, {item.coordinates[1].toFixed(5)}
+        </Text>
+      )}
       {item.imageUrl && (
         <Image
           source={{ uri: item.imageUrl }}
@@ -133,8 +141,8 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
     marginBottom: 20,
-    textAlign: "center", // Center the heading under the dynamic island
-    marginTop: 40, // Adjust top margin for dynamic island
+    textAlign: "center",
+    marginTop: 40,
   },
   error: {
     color: "red",
@@ -144,10 +152,9 @@ const styles = StyleSheet.create({
   },
   tabs: {
     flexDirection: "row",
-    justifyContent: "space-between", // Ensure even space between tabs
+    justifyContent: "space-between",
     marginBottom: 15,
-    width: "100%", // Ensure tabs take full width
-    paddingHorizontal: 0, // No side padding for container
+    width: "100%",
   },
   tab: {
     paddingVertical: 10,
@@ -155,8 +162,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#eee",
     borderRadius: 20,
     marginBottom: 10,
-    flex: 1, // Ensure tabs expand to fill space evenly
-    alignItems: "center", // Ensure tab content is centered
+    flex: 1,
+    alignItems: "center",
+    marginHorizontal: 3,
   },
   activeTab: {
     backgroundColor: "#333",
@@ -165,7 +173,7 @@ const styles = StyleSheet.create({
     color: "#000",
     fontWeight: "bold",
     textAlign: "center",
-    fontSize: 11, // Adjust this value to change text size (default is 18)
+    fontSize: 11,
   },
   list: { paddingBottom: 100 },
   reportCard: {
@@ -175,24 +183,10 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     position: "relative",
   },
-  cardHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 5,
-  },
   title: {
     fontSize: 16,
     fontWeight: "600",
-  },
-  statusTag: {
-    color: "#fff",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    fontSize: 12,
-    fontWeight: "bold",
-    overflow: "hidden",
+    marginBottom: 5,
   },
   imagePreview: {
     marginTop: 10,
