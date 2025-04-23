@@ -6,6 +6,7 @@ import {
   submitReport,
   getReportsByAdmin,
   updateReportStatus,
+  patchUpdateReportStatus
 } from "../controllers/reportcontroller";
 
 const router = express.Router();
@@ -14,6 +15,7 @@ const upload = multer({ storage });
 
 router.post("/", authenticateUser, upload.single("image"), submitReport);
 router.post("/fetch", authenticateUser, getReportsByAdmin); // 👈 this line must be here
+router.patch("/:id/status", patchUpdateReportStatus);
 router.patch("/:id", authenticateUser, updateReportStatus);
 
 export default router;

@@ -111,14 +111,13 @@ const AdminLandingPage = () => {
       }
 
       // Update status on the backend
-      const response = await fetch(`${API_BASE_URL}/api/reports/updateStatus`, {
-        method: "PUT",
+      const response = await fetch(`${API_BASE_URL}/api/reports/${selectedReport._id}/status`, {
+        method: "PATCH",  // Using PATCH to update status
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          reportId: selectedReport._id,
           status: newStatus,
         }),
       });
@@ -251,6 +250,10 @@ const AdminLandingPage = () => {
                   title="Completed"
                   onPress={() => handleStatusUpdate("completed")}
                 />
+                <Button
+                  title="Pending"
+                  onPress={() => handleStatusUpdate("pending")}
+                />
               </View>
             </View>
           </TouchableWithoutFeedback>
@@ -306,7 +309,7 @@ const styles = StyleSheet.create({
   reportCard: {
     backgroundColor: "#f8f8f8",
     padding: 15,
-    borderRadius: 12,  // Rounded corners for the report card
+    borderRadius: 12,
     marginBottom: 12,
     position: "relative",
   },
@@ -314,10 +317,12 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: "bold",
     marginBottom: 10,
+    paddingTop: 25,  // Adjust the value as needed
+
   },
   fieldBox: {
-    backgroundColor: "#f0f0f0",  // Grey box for each field
-    borderRadius: 10,  // Rounded corners for each field
+    backgroundColor: "#f0f0f0",
+    borderRadius: 10,
     padding: 10,
     marginBottom: 10,
   },
@@ -333,11 +338,10 @@ const styles = StyleSheet.create({
     textDecorationLine: "underline",
     marginTop: 4,
   },
-  // Status Badge Styles (Top-right corner)
   statusBadge: {
     position: "absolute",
     top: 10,
-    right: 17,
+    right: 20,
     paddingVertical: 6,
     paddingHorizontal: 15,
     borderRadius: 20,
@@ -347,7 +351,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 12,
   },
-  // Three dots button
   threeDotButton: {
     position: "absolute",
     top: 13,
@@ -358,7 +361,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#333",
   },
-  // Modal Styles
   modalBackground: {
     flex: 1,
     justifyContent: "center",
