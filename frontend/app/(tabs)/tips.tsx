@@ -83,7 +83,6 @@ const Tips = () => {
           {item.status.toUpperCase()}
         </Text>
       </View>
-      <Text>🆔 User ID: {item.userId}</Text>
       <Text>🗂 Category: {item.category}</Text>
       <Text>📝 Description: {item.description}</Text>
       <Text>Date: {new Date(item.createdAt).toLocaleString()}</Text>
@@ -133,7 +132,7 @@ export default Tips;
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, backgroundColor: "#fff" },
   heading: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: "bold",
     marginBottom: 20,
     textAlign: "center",
@@ -179,8 +178,9 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   title: {
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: "600",
+    
   },
   statusTag: {
     color: "#fff",
