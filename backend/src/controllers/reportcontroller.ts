@@ -125,3 +125,37 @@ export const updateReportStatus = async (req: AuthRequest, res: Response): Promi
     res.status(500).json({ error: "Internal server error." });
   }
 };
+
+// --- UPDATE REPORT STATUS (PATCH) ---
+// This will be triggered by the three-dot button
+export const patchUpdateReportStatus = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;  // Report ID from the URL params
+    const { status } = req.body;  // New status ("ongoing", "completed", etc.)
+
+    // Validate status input
+    const validStatuses = ["pending", "ongoing", "completed"];
+    if (!validStatuses.includes(status)) {
+      res.status(400).json({ error: "Invalid status provided." });
+      return;
+    }
+
+    // Find and update the report's status
+    const updatedReport = await Report.findByIdAndUpdate(
+      id,
+      { status },
+      { new: true }  // Return the updated report
+    );
+
+    if (!updatedReport) {
+      res.status(404).json({ error: "Report not found." });
+      return;
+    }
+
+    // Respond with the updated report
+    res.status(200).json({ message: "Status updated successfully.", report: updatedReport });
+  } catch (err) {
+    console.error("Error updating report status:", err);
+    res.status(500).json({ error: "Internal server error." });
+  }
+};

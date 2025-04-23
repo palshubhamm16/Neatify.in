@@ -10,7 +10,8 @@ const reportSchema = new mongoose.Schema(
 
     category: {
       type: String,
-      enum: ["campus", "room", "helpdesk"],
+      enum: ["campus", "room", "helpdesk", "garbage"],
+      default: "garbage",
       required: false,
     },
 

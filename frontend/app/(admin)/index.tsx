@@ -7,6 +7,10 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Image,
+  Linking,
+  Modal,
+  TouchableWithoutFeedback,
+  Button,
 } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import { useAuth } from "@clerk/clerk-expo";
@@ -17,7 +21,7 @@ type Report = {
   _id: string;
   campus: string;
   category: string;
-  status: string;
+  status: string;  // Status could be "pending", "ongoing", or "completed"
   createdAt: string;
   imageUrl: string;
   description: string;
@@ -32,6 +36,8 @@ const AdminLandingPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [showDropdown, setShowDropdown] = useState(false); // For controlling the dropdown visibility
+  const [selectedReport, setSelectedReport] = useState<Report | null>(null); // For tracking which report's status to update
 
   const fetchReports = async (category: string = "") => {
     setLoading(true);
@@ -72,20 +78,115 @@ const AdminLandingPage = () => {
     fetchReports();
   }, []);
 
+  const openInMap = (coordinates: number[]) => {
+    if (coordinates.length === 2) {
+      const [lng, lat] = coordinates;
+      const url = `https://www.google.com/maps?q=${lat},${lng}`;
+      Linking.openURL(url);
+    }
+  };
+
+  // Determine the status color based on the status value
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "pending":
+        return "#FF4D4D"; // Red
+      case "ongoing":
+        return "#FF9E2C"; // Orange
+      case "completed":
+        return "#4CAF50"; // Green
+      default:
+        return "#000"; // Default color (black)
+    }
+  };
+
+  const handleStatusUpdate = async (newStatus: string) => {
+    if (!selectedReport) return;
+
+    try {
+      const token = await getToken({ template: "neatify" });
+
+      if (!token) {
+        throw new Error("Missing authentication token.");
+      }
+
+      // Update status on the backend
+      const response = await fetch(`${API_BASE_URL}/api/reports/updateStatus`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          reportId: selectedReport._id,
+          status: newStatus,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to update status.");
+      }
+
+      // Close dropdown and update the report list
+      setShowDropdown(false);
+      fetchReports(); // Refresh reports after status update
+    } catch (err: any) {
+      setError(err.message || "Something went wrong.");
+    }
+  };
+
   const renderReport = ({ item }: { item: Report }) => (
     <View style={styles.reportCard}>
       <Text style={styles.title}>📍 {item.campus}</Text>
-      <Text>🆔 User ID: {item.userId}</Text>
-      <Text>🗂 Category: {item.category}</Text>
-      <Text>Status: {item.status}</Text>
-      <Text>📝 Description: {item.description}</Text>
-      <Text>Date: {new Date(item.createdAt).toLocaleString()}</Text>
-      {item.area && <Text>🏢 Area: {item.area}</Text>}
-      {item.coordinates && item.coordinates.length === 2 && (
-        <Text>
-          📌 Coordinates: {item.coordinates[0].toFixed(5)}, {item.coordinates[1].toFixed(5)}
-        </Text>
+
+      {/* Status at top-right corner */}
+      <View
+        style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}
+      >
+        <Text style={styles.statusText}>{item.status.toUpperCase()}</Text>
+      </View>
+
+      {/* Three dot button for status update */}
+      <TouchableOpacity
+        style={styles.threeDotButton}
+        onPress={() => {
+          setSelectedReport(item);
+          setShowDropdown(true); // Show the dropdown for this report
+        }}
+      >
+        <Text style={styles.threeDotText}>⋮</Text>
+      </TouchableOpacity>
+
+      <View style={styles.fieldBox}>
+        <Text>🗂 Category: {item.category}</Text>
+      </View>
+
+      <View style={styles.fieldBox}>
+        <Text>📝 Description: {item.description}</Text>
+      </View>
+
+      <View style={styles.fieldBox}>
+        <Text>Date: {new Date(item.createdAt).toLocaleString()}</Text>
+      </View>
+
+      {item.area && (
+        <View style={styles.fieldBox}>
+          <Text>🏢 Area: {item.area}</Text>
+        </View>
       )}
+
+      {item.coordinates && item.coordinates.length === 2 && (
+        <TouchableOpacity onPress={() => item.coordinates && openInMap(item.coordinates)}>
+          <View style={styles.fieldBox}>
+            <Text style={styles.mapLink}>
+              📌 Coordinates: {item.coordinates[0].toFixed(5)}, {item.coordinates[1].toFixed(5)} (Tap to open)
+            </Text>
+          </View>
+        </TouchableOpacity>
+      )}
+
       {item.imageUrl && (
         <Image
           source={{ uri: item.imageUrl }}
@@ -128,6 +229,32 @@ const AdminLandingPage = () => {
           renderItem={renderReport}
           contentContainerStyle={styles.list}
         />
+      )}
+
+      {/* Dropdown modal for status update */}
+      {showDropdown && selectedReport && (
+        <Modal
+          visible={showDropdown}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setShowDropdown(false)}
+        >
+          <TouchableWithoutFeedback onPress={() => setShowDropdown(false)}>
+            <View style={styles.modalBackground}>
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>Update Status</Text>
+                <Button
+                  title="Ongoing"
+                  onPress={() => handleStatusUpdate("ongoing")}
+                />
+                <Button
+                  title="Completed"
+                  onPress={() => handleStatusUpdate("completed")}
+                />
+              </View>
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
       )}
     </View>
   );
@@ -179,14 +306,20 @@ const styles = StyleSheet.create({
   reportCard: {
     backgroundColor: "#f8f8f8",
     padding: 15,
-    borderRadius: 8,
+    borderRadius: 12,  // Rounded corners for the report card
     marginBottom: 12,
     position: "relative",
   },
   title: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 5,
+    fontSize: 28,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  fieldBox: {
+    backgroundColor: "#f0f0f0",  // Grey box for each field
+    borderRadius: 10,  // Rounded corners for each field
+    padding: 10,
+    marginBottom: 10,
   },
   imagePreview: {
     marginTop: 10,
@@ -194,5 +327,54 @@ const styles = StyleSheet.create({
     height: 200,
     borderRadius: 8,
     backgroundColor: "#ccc",
+  },
+  mapLink: {
+    color: "#007AFF",
+    textDecorationLine: "underline",
+    marginTop: 4,
+  },
+  // Status Badge Styles (Top-right corner)
+  statusBadge: {
+    position: "absolute",
+    top: 10,
+    right: 17,
+    paddingVertical: 6,
+    paddingHorizontal: 15,
+    borderRadius: 20,
+  },
+  statusText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 12,
+  },
+  // Three dots button
+  threeDotButton: {
+    position: "absolute",
+    top: 13,
+    right: 7,
+  },
+  threeDotText: {
+    fontSize: 30,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  // Modal Styles
+  modalBackground: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 10,
+    width: 250,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 15,
+    textAlign: "center",
   },
 });
