@@ -129,14 +129,34 @@ export default AdminLandingPage;
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, backgroundColor: "#fff" },
-  heading: { fontSize: 24, fontWeight: "bold", marginBottom: 10 },
-  tabs: { flexDirection: "row", marginBottom: 10 },
+  heading: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 20,
+    textAlign: "center", // Center the heading under the dynamic island
+    marginTop: 40, // Adjust top margin for dynamic island
+  },
+  error: {
+    color: "red",
+    fontSize: 14,
+    textAlign: "center",
+    marginVertical: 10,
+  },
+  tabs: {
+    flexDirection: "row",
+    justifyContent: "space-between", // Ensure even space between tabs
+    marginBottom: 15,
+    width: "100%", // Ensure tabs take full width
+    paddingHorizontal: 0, // No side padding for container
+  },
   tab: {
-    paddingVertical: 6,
-    paddingHorizontal: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
     backgroundColor: "#eee",
     borderRadius: 20,
-    marginRight: 10,
+    marginBottom: 10,
+    flex: 1, // Ensure tabs expand to fill space evenly
+    alignItems: "center", // Ensure tab content is centered
   },
   activeTab: {
     backgroundColor: "#333",
@@ -144,6 +164,8 @@ const styles = StyleSheet.create({
   tabText: {
     color: "#000",
     fontWeight: "bold",
+    textAlign: "center",
+    fontSize: 11, // Adjust this value to change text size (default is 18)
   },
   list: { paddingBottom: 100 },
   reportCard: {
@@ -151,11 +173,26 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 8,
     marginBottom: 12,
+    position: "relative",
+  },
+  cardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 5,
   },
   title: {
     fontSize: 16,
     fontWeight: "600",
-    marginBottom: 5,
+  },
+  statusTag: {
+    color: "#fff",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    fontSize: 12,
+    fontWeight: "bold",
+    overflow: "hidden",
   },
   imagePreview: {
     marginTop: 10,
@@ -163,10 +200,5 @@ const styles = StyleSheet.create({
     height: 200,
     borderRadius: 8,
     backgroundColor: "#ccc",
-  },
-  error: {
-    color: "red",
-    marginTop: 20,
-    textAlign: "center",
   },
 });
