@@ -47,21 +47,11 @@ export default function TabLayout() {
           ),
         }}
       />
-      {/* Eco Tips Tab */}
-      <Tabs.Screen
-        name="tips"
-        options={{
-          title: "Eco Tips",
-          tabBarIcon: ({ color }: { color: string }) => (
-            <Ionicons size={28} name="bulb-outline" color={color} />
-          ),
-        }}
-      />
       {/* Pickup Tab */}
       <Tabs.Screen
         name="pickup"
         options={{
-          title: "Pickup",
+          title: "History",
           tabBarIcon: ({ color }: { color: string }) => (
             <Ionicons size={28} name="cube-outline" color={color} />
           ),
