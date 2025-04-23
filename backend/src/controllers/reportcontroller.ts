@@ -159,3 +159,39 @@ export const patchUpdateReportStatus = async (req: AuthRequest, res: Response): 
     res.status(500).json({ error: "Internal server error." });
   }
 };
+
+
+
+// --- GET USER REPORT HISTORY BASED ON USER ID ---
+export const getUserReportsHistory = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ error: "User not authenticated." });
+      return;
+    }
+
+    const userId = req.user.sub; // Extract user ID from the request's user object
+
+    // Build the filter object to fetch reports for the current user
+    const filter: Record<string, any> = { userId };
+
+    // If a status is provided in the query parameters, filter by that as well
+    const { status } = req.query;
+    if (status) {
+      filter.status = status; // Filter reports by status (optional)
+    }
+
+    // Fetch the reports based on the filter, sorted by creation date (most recent first)
+    const reports = await Report.find(filter).sort({ createdAt: -1 });
+
+    if (reports.length === 0) {
+      res.status(404).json({ message: "No reports found for this user." });
+      return;
+    }
+
+    res.status(200).json(reports);
+  } catch (err) {
+    console.error("❌ Error fetching user reports:", err);
+    res.status(500).json({ error: "Internal server error." });
+  }
+};

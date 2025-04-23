@@ -1,13 +1,8 @@
-import React, { useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  Image,
-  ActivityIndicator,
-  TouchableOpacity,
-} from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, StyleSheet, FlatList, Image, ActivityIndicator, TouchableOpacity } from "react-native";
+import { useUser, useAuth } from "@clerk/clerk-react"; // Clerk hooks to get user info and generate token
+
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
 type Report = {
   _id: string;
@@ -19,39 +14,6 @@ type Report = {
   description: string;
   userId: string;
 };
-
-const mockReports: Report[] = [
-  {
-    _id: "1",
-    campus: "North Campus",
-    category: "room",
-    status: "pending",
-    createdAt: new Date().toISOString(),
-    imageUrl: "https://via.placeholder.com/300x200.png?text=Report+1",
-    description: "Spilled trash in front of dorm.",
-    userId: "user_abc123",
-  },
-  {
-    _id: "2",
-    campus: "South Campus",
-    category: "campus",
-    status: "completed",
-    createdAt: new Date().toISOString(),
-    imageUrl: "https://via.placeholder.com/300x200.png?text=Report+2",
-    description: "Overflowing bins near the cafeteria.",
-    userId: "user_xyz456",
-  },
-  {
-    _id: "3",
-    campus: "Central Campus",
-    category: "helpdesk",
-    status: "ongoing",
-    createdAt: new Date().toISOString(),
-    imageUrl: "https://via.placeholder.com/300x200.png?text=Report+3",
-    description: "Broken tap in hostel washroom.",
-    userId: "user_lmn789",
-  },
-];
 
 const getStatusColor = (status: Report["status"]) => {
   switch (status) {
@@ -66,20 +28,50 @@ const getStatusColor = (status: Report["status"]) => {
   }
 };
 
-const Pickup = () => {
-  const [reports, setReports] = useState<Report[]>([]);
+const Tips = () => {
+  const [reports, setReports] = useState<Report[]>([]); // Initialize as an empty array
   const [loading, setLoading] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState("");
+  const { user } = useUser(); // Get user info from Clerk
+  const { getToken } = useAuth(); // Clerk's getToken function for authentication
 
   useEffect(() => {
-    setTimeout(() => {
-      setReports(mockReports);
-      setLoading(false);
-    }, 1000);
-  }, []);
+    if (user) {
+      const fetchReports = async () => {
+        try {
+          const token = await getToken({ template: "neatify" }); // Generate token for authentication
+
+          if (!token) {
+            console.error("Authentication failed: No token generated.");
+            return;
+          }
+
+          const response = await fetch(`${API_BASE_URL}/api/reports/user/reports`, {
+            headers: {
+              Authorization: `Bearer ${token}`, // Include the token in the request
+            },
+          });
+
+          const data = await response.json();
+          console.log("Fetched reports:", data);
+
+          if (Array.isArray(data)) {
+            setReports(data); // Only set data if it is an array
+          } else {
+            console.error("Invalid data format:", data);
+          }
+        } catch (error) {
+          console.error("Error fetching reports:", error);
+        } finally {
+          setLoading(false); // Stop loading spinner when done
+        }
+      };
+      fetchReports();
+    }
+  }, [user, getToken]); // Fetch when the user is available
 
   const filteredReports = selectedStatus
-    ? reports.filter((r) => r.status === selectedStatus)
+    ? (Array.isArray(reports) ? reports.filter((r) => r.status === selectedStatus) : [])
     : reports;
 
   const renderReport = ({ item }: { item: Report }) => (
@@ -87,8 +79,7 @@ const Pickup = () => {
       <View style={styles.cardHeader}>
         <Text style={styles.title}>📍 {item.campus}</Text>
         <Text
-          style={[styles.statusTag, { backgroundColor: getStatusColor(item.status) }]}
-        >
+          style={[styles.statusTag, { backgroundColor: getStatusColor(item.status) }]} >
           {item.status.toUpperCase()}
         </Text>
       </View>
@@ -115,8 +106,7 @@ const Pickup = () => {
           <TouchableOpacity
             key={status}
             style={[styles.tab, selectedStatus === status && styles.activeTab]}
-            onPress={() => setSelectedStatus(status)}
-          >
+            onPress={() => setSelectedStatus(status)}>
             <Text style={styles.tabText}>
               {status ? status.toUpperCase() : "ALL"}
             </Text>
@@ -138,7 +128,7 @@ const Pickup = () => {
   );
 };
 
-export default Pickup;
+export default Tips;
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, backgroundColor: "#fff" },
@@ -146,15 +136,15 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
     marginBottom: 20,
-    textAlign: "center", // Center the heading under the dynamic island
-    marginTop: 40, // Adjust top margin for dynamic island
+    textAlign: "center",
+    marginTop: 40,
   },
   tabs: {
     flexDirection: "row",
-    justifyContent: "space-between", // Ensure even space between tabs
+    justifyContent: "space-between",
     marginBottom: 15,
-    width: "100%", // Ensure tabs take full width
-    paddingHorizontal: 0, // No side padding for container
+    width: "100%",
+    paddingHorizontal: 0,
   },
   tab: {
     paddingVertical: 10,
@@ -162,8 +152,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#eee",
     borderRadius: 20,
     marginBottom: 10,
-    flex: 1, // Ensure tabs expand to fill space evenly
-    alignItems: "center", // Ensure tab content is centered
+    flex: 1,
+    alignItems: "center",
   },
   activeTab: {
     backgroundColor: "#333",
@@ -172,7 +162,7 @@ const styles = StyleSheet.create({
     color: "#000",
     fontWeight: "bold",
     textAlign: "center",
-    fontSize: 11, // Adjust this value to change text size (default is 18)
+    fontSize: 11,
   },
   list: { paddingBottom: 100 },
   reportCard: {
