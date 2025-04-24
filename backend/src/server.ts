@@ -16,7 +16,6 @@ const app = express();
 
 // ✅ Debug Clerk environment variables
 console.log("CLERK_PUBLISHABLE_KEY:", process.env.CLERK_PUBLISHABLE_KEY);
-console.log("CLERK_SECRET_KEY:", process.env.CLERK_SECRET_KEY);
 
 // 🔐 Check Clerk env vars
 if (!process.env.CLERK_PUBLISHABLE_KEY || !process.env.CLERK_SECRET_KEY) {
