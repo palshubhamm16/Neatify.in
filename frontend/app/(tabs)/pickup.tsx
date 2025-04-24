@@ -53,7 +53,7 @@ const Tips = () => {
           });
 
           const data = await response.json();
-          console.log("Fetched reports:", data);
+          //console.log("Fetched reports:", data);
 
           if (Array.isArray(data)) {
             setReports(data); // Only set data if it is an array

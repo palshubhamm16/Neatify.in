@@ -34,7 +34,7 @@ const AuthScreen = () => {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <StatusBar hidden={true} />
-      <View style={[styles.headingContainer]}>
+      <View style={styles.headingContainer}>
         {startTyping && (
           <Typewriter style={styles.label} typing={1} minDelay={20}>
             Neatify.in
@@ -45,12 +45,22 @@ const AuthScreen = () => {
       <View style={styles.flexGrowArea} />
 
       <View style={[styles.blackDiv, { paddingBottom: insets.bottom }]}>
+        {/* TOS & About Us links */}
+        <View style={styles.linkContainer}>
+          <Pressable onPress={() => router.push("/auth/tos")}>
+            <Text style={styles.linkText}>Terms of Service</Text>
+          </Pressable>
+          <Pressable onPress={() => router.push("/auth/about")}>
+            <Text style={styles.linkText}>About Us</Text>
+          </Pressable>
+        </View>
+
+        {/* Social + email sign-in */}
         <View style={styles.socialButtonsContainer}>
           <SocialLoginButton strategy="oauth_apple" label="Sign in with Apple" />
           <SocialLoginButton strategy="oauth_google" label="Sign in with Google" />
           <SocialLoginButton strategy="oauth_facebook" label="Sign in with Facebook" />
 
-          {/* ✅ Fixed email sign-in button */}
           <Pressable onPress={() => router.push("/auth/sign-in")} style={styles.emailButton}>
             <Text style={styles.emailButtonText}>Sign in with Email</Text>
           </Pressable>
@@ -92,6 +102,16 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 40,
     padding: 20,
     width: "100%",
+  },
+  linkContainer: {
+    marginBottom: 16,
+    alignItems: "center",
+    gap: 8,
+  },
+  linkText: {
+    color: "#aaa",
+    fontSize: 14,
+    textDecorationLine: "underline",
   },
   socialButtonsContainer: {
     width: "100%",
